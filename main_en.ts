@@ -93,30 +93,6 @@
         <translation>Edit...</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="126"/>
-        <source>Color of &quot;Today&quot; dates...</source>
-        <translation>Color of &quot;Today&quot; dates...</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="129"/>
-        <source>Цвет сегодняшнего текста</source>
-        <translation>Color of &quot;Today&quot; dates</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="167"/>
-        <source>Color of other dates...</source>
-        <translation>Color of other dates...</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="170"/>
-        <source>Цвет прочего текста</source>
-        <translation>Color of other dates</translation>
-    </message>
-    <message>
-        <source>Color of &quot;Today&quot; dates</source>
-        <translation type="vanished">Color of &quot;Today&quot; dates</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="143"/>
         <source>Other settings...</source>
         <translation>Other settings...</translation>
@@ -124,10 +100,6 @@
     <message>
         <source>Color3...</source>
         <translation type="vanished">Color3...</translation>
-    </message>
-    <message>
-        <source>Color of other dates (yesterday, tomorrow...)</source>
-        <translation type="vanished">Color of other dates (yesterday, tomorrow...)</translation>
     </message>
     <message>
         <source>Edit</source>
@@ -146,6 +118,28 @@
         <location filename="mainwindow.ui" line="138"/>
         <source>Exit</source>
         <translation>Exit</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="175"/>
+        <source>Color of Today dates...</source>
+        <translation>Color of Today dates...</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="178"/>
+        <location filename="mainwindow.cpp" line="890"/>
+        <source>Color of Today dates</source>
+        <translation>Color of Today dates</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="216"/>
+        <source>Color of Default dates...</source>
+        <translation>Color of Default dates...</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="219"/>
+        <location filename="mainwindow.cpp" line="1056"/>
+        <source>Color of Default dates</source>
+        <translation>Color of Default dates</translation>
     </message>
     <message>
         <source>Other settings</source>
@@ -180,11 +174,6 @@
         <location filename="mainwindow.cpp" line="81"/>
         <source>Ошибка</source>
         <translation>Error</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="215"/>
-        <source>Вчера</source>
-        <translation>Yesterday</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="232"/>

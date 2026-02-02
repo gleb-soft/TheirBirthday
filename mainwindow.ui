@@ -20,7 +20,7 @@
    <string>Their Birthday</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="TheirBirthday.qrc">
+   <iconset>
     <normaloff>:/new/files/TheirBirthday.ico</normaloff>:/new/files/TheirBirthday.ico</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -70,7 +70,7 @@
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>60</height>
+        <height>40</height>
        </size>
       </property>
       <property name="inputMethodHints">
@@ -129,10 +129,20 @@
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionToolBar"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuView"/>
    <addaction name="menu"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
+   <property name="allowedAreas">
+    <set>Qt::ToolBarArea::BottomToolBarArea|Qt::ToolBarArea::TopToolBarArea</set>
+   </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
@@ -143,7 +153,6 @@
    <addaction name="actionColor"/>
    <addaction name="actionColor3"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionEdit">
    <property name="text">
     <string>Edit...</string>
@@ -151,7 +160,7 @@
   </action>
   <action name="actionFont">
    <property name="icon">
-    <iconset resource="TheirBirthday.qrc">
+    <iconset>
      <normaloff>:/new/files/font.ico</normaloff>:/new/files/font.ico</iconset>
    </property>
    <property name="text">
@@ -160,19 +169,19 @@
   </action>
   <action name="actionColor">
    <property name="icon">
-    <iconset resource="TheirBirthday.qrc">
+    <iconset>
      <normaloff>:/new/files/today.ico</normaloff>:/new/files/today.ico</iconset>
    </property>
    <property name="text">
-    <string>Color of &quot;Today&quot; dates...</string>
+    <string>Color of Today dates...</string>
    </property>
    <property name="toolTip">
-    <string>Цвет сегодняшнего текста</string>
+    <string>Color of Today dates</string>
    </property>
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset resource="TheirBirthday.qrc">
+    <iconset>
      <normaloff>:/new/files/exit.ico</normaloff>:/new/files/exit.ico</iconset>
    </property>
    <property name="text">
@@ -201,20 +210,26 @@
   </action>
   <action name="actionColor3">
    <property name="icon">
-    <iconset resource="TheirBirthday.qrc">
+    <iconset>
      <normaloff>:/new/files/yesterday.ico</normaloff>:/new/files/yesterday.ico</iconset>
    </property>
    <property name="text">
-    <string>Color of other dates...</string>
+    <string>Color of Default dates...</string>
    </property>
    <property name="toolTip">
-    <string>Цвет прочего текста</string>
+    <string>Color of Default dates</string>
+   </property>
+  </action>
+  <action name="actionToolBar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>ToolBar</string>
    </property>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="TheirBirthday.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

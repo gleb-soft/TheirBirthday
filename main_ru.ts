@@ -83,6 +83,11 @@
         <translation>Файл</translation>
     </message>
     <message>
+        <location filename="mainwindow.ui" line="72"/>
+        <source>View</source>
+        <translation>Вид</translation>
+    </message>
+    <message>
         <location filename="mainwindow.ui" line="84"/>
         <source>?</source>
         <translation>?</translation>
@@ -92,42 +97,32 @@
         <source>Edit...</source>
         <translation>Редактировать...</translation>
     </message>
-    <message>
-        <location filename="mainwindow.ui" line="126"/>
-        <source>Color of &quot;Today&quot; dates...</source>
+	<message>
+        <location filename="mainwindow.ui" line="175"/>
+        <source>Color of Today dates...</source>
         <translation>Цвет сегодняшнего текста...</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="129"/>
-        <source>Цвет сегодняшнего текста</source>
+        <location filename="mainwindow.ui" line="178"/>
+        <location filename="mainwindow.cpp" line="890"/>
+        <source>Color of Today dates</source>
         <translation>Цвет сегодняшнего текста</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="167"/>
-        <source>Color of other dates...</source>
+        <location filename="mainwindow.ui" line="216"/>
+        <source>Color of Default dates...</source>
         <translation>Цвет остального текста...</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="170"/>
-        <source>Цвет прочего текста</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>Color of &quot;Today&quot; dates</source>
-        <translation type="vanished">Цвет шрифта сегодняшних дат</translation>
+        <location filename="mainwindow.ui" line="219"/>
+        <location filename="mainwindow.cpp" line="1056"/>
+        <source>Color of Default dates</source>
+        <translation>Цвет остального текста</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="143"/>
         <source>Other settings...</source>
         <translation>Прочие настройки...</translation>
-    </message>
-    <message>
-        <source>Color3...</source>
-        <translation type="vanished">Цвет 3...</translation>
-    </message>
-    <message>
-        <source>Color of other dates (yesterday, tomorrow...)</source>
-        <translation type="vanished">Цвет шрифта прочих дат</translation>
     </message>
     <message>
         <source>Edit</source>

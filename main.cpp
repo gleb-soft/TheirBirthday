@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
     if(isRunning)
     {
         //QMessageBox::warning(0, "!!!", "The application is already running!");
+        qDebug() << "The application is already running!";
         return 1;
     }
 

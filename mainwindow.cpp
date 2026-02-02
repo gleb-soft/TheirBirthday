@@ -26,16 +26,18 @@
 #include <QProcess>
 #include <QMessageBox>
 #include <QIcon>
+#include <QScrollBar>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     rndRuns(QRandomGenerator::global()->generate()),
     gSettings("TheirBirthdaySoft","TheirBirthday"),
-    pathMan()
+    pathMan(),
+    regexpDt("^([0-9]{2})/([0-9]{2})/?([0-9]{0,4})")
 {
     ui->setupUi(this);
-    lastUpdate = QDateTime::currentDateTime(); //QDateTime::fromSecsSinceEpoch(0);
+    lastDate = QDate::currentDate(); //QDateTime::fromSecsSinceEpoch(0);
     connect(ui->actionExit, SIGNAL(triggered()), this, SLOT(close()));
     //задаём кастомное контекстное меню в полуокнах
     ui->plainTEditEvents->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -45,6 +47,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->plainTEditRuns->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->plainTEditRuns, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenuRuns(const QPoint&)));
     ui->plainTEditRuns->setLineWrapMode(QPlainTextEdit::NoWrap);
+    QAction *toggleToolbarAction = ui->mainToolBar->toggleViewAction();
+    toggleToolbarAction->setText(tr("Tool bar"));
+    //ui->menuView->addAction(toggleToolbarAction);
+    //connect(toggleToolbarAction, &QAction::triggered, this, &MainWindow::on_actionToolBar_triggered);
+    connect(ui->mainToolBar, &QToolBar::visibilityChanged, this, &MainWindow::handleToolBarVisibilityChange);
+    gToolBar = gSettings.value("/ToolBar", false).toBool();
+    if (!gToolBar) ui->mainToolBar->hide();
     //обрабатываем иконку трея
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setIcon(QIcon(":/new/files/TheirBirthday.ico"));
@@ -55,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QAction * quitAction = new QAction(tr("Выход"), this);
 
     connect(viewWindow, SIGNAL(triggered()), this, SLOT(show()));
-    connect(quitAction, SIGNAL(triggered()), this, SLOT(close()));
+    connect(quitAction, SIGNAL(triggered()), this, SLOT(on_actionExit_triggered()));//SLOT(close()));
 
     menu->addAction(viewWindow);
     menu->addAction(quitAction);
@@ -77,13 +86,14 @@ MainWindow::MainWindow(QWidget *parent) :
     gDelimiter = gSettings.value("/Delimiter", "/").toString();
     //Сворачивать в трей
     gTray = gSettings.value("/Tray", false).toBool();
+    if(gTray) this->setWindowFlags(windowFlags() | Qt::Tool);
     //мало ли чего там с сеттингов считалось...
     if (gDays < 1 || gDays > 364) gDays = 14;
     if (gDelimiter.length() != 1) gDelimiter = "/";
     // Прочтены ли файлы
     if (!pathMan.ok())
     {
-        QMessageBox::critical(0, tr("Ошибка"), pathMan.errString());
+        QMessageBox::critical(this, tr("Ошибка"), pathMan.errString());
         return;
     }
     //снимаем комменты с прошедших событий
@@ -109,6 +119,19 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::showEvent(QShowEvent* event) {
+    QMainWindow::showEvent(event);
+    if (event->type() == QEvent::Show)
+        scrollToStartEdit();//QTimer::singleShot(100, this, &MainWindow::scrollToStartEditRuns);
+}
+
+void MainWindow::scrollToStartEdit() {
+    //qDebug() << "scrollToStartEdit";
+    ui->plainTEditDates->verticalScrollBar()->setValue(0);
+    ui->plainTEditEvents->verticalScrollBar()->setValue(0);
+    ui->plainTEditRuns->horizontalScrollBar()->setValue(0);
+}
+
 void MainWindow::setWindowFont()
 {
     //считываем данные шрифта
@@ -121,6 +144,7 @@ void MainWindow::setWindowFont()
     QFont fnt(fntFamily, fntSize, fntBold, fntItalic);
     ui->plainTEditDates->setFont(fnt);
     ui->plainTEditEvents->setFont(fnt);
+    ui->plainTEditRuns->setFont(fnt);
 }
 
 void MainWindow::setGColor()
@@ -170,9 +194,9 @@ void MainWindow::setWindowSize()
 //заполняем полуокно по переданному имени файла
 void MainWindow::setLst(const QString& path, const PathManager::FileType &type)
 {
-    QRegExp regexpDt("^[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9]");
+    //QRegExp regexpDt("^[0-9]{2}/[0-9]{2}/?[0-9]{0,4}");
     QRegExp regexpDOW0("^[А-Я][а-я][0-9]");
-    QRegExp regexpDOW("^[А-Я][а-я][0-9]/[0-9][0-9]");
+    QRegExp regexpDOW("^[А-Я][а-я][0-9]/[0-9]{2}");
     QFile fl(path);
     if (!QFile::exists(path))
     {
@@ -187,7 +211,8 @@ void MainWindow::setLst(const QString& path, const PathManager::FileType &type)
         {
             //QByteArray sBStr = fl.readLine();
             QString sStr = fl.readLine();//codec->toUnicode(sBStr);
-            if (type == PathManager::FileType::Runs) {
+            if (type == PathManager::FileType::Runs)
+            {
                 if (!sStr.startsWith(";"))
                     qlRuns << sStr;
             } else if (sStr.contains(regexpDt) || sStr.contains(regexpDOW) || sStr.contains(regexpDOW0))
@@ -215,20 +240,37 @@ void MainWindow::setLstRuns()
 {
     setLst(pathMan.runsFilePath(), PathManager::FileType::Runs);
 }
-//формируем строки "Вчера"
-QString MainWindow::getResultYesterdayStr(QList<QString> pql)
+void MainWindow::getCurrentLStrPrefix(QStringList &slb, const QList<QString> &pql, const QDate &currentDate, QString prefix)
 {
-    QString sb = "";
-    QRegExp regexpDigit("[0-9][0-9]");
-    int gdowom = getDayOfWeekOfMonth(-1);
-
+    //QRegExp regexpDt("^([0-9]{2})/([0-9]{2})/?([0-9]{0,4})");
     foreach(QString fs, pql)
     {
-        QString sDate = fs.left(10);
-        QDate dDate = QDate::fromString(sDate, "dd/MM/yyyy");
-        if (dDate.day() == QDate::currentDate().addDays(-1).day() && dDate.month() == QDate::currentDate().addDays(-1).month())
-            sb += tr("Вчера") + fs.mid(10);// + "\n";
+        //QString sDate = fs.left(10);
+        //QDate dDate = QDate::fromString(sDate, "dd/MM/yyyy");
+        auto matchDate = regexpDt.match(fs);
+        if (matchDate.hasMatch() &&
+            matchDate.captured(1).toInt() == currentDate.day() &&
+            matchDate.captured(2).toInt() == currentDate.month()) {
+            QString st = "";
+            int iy = matchDate.captured(3).isEmpty() ? 0 : matchDate.captured(3).toInt();
+            if (iy > 0) {
+                iy = currentDate.year() - iy;
+                st = prefix + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина") + ")";
+            } else
+                st = prefix + fs.mid(matchDate.captured(0).length()).trimmed();
+            slb.append(st);// + "\n";
+        }
     }
+}
+//формируем строки "Вчера"
+QStringList MainWindow::getResultYesterdayLStr(QList<QString> pql)
+{
+    QStringList slb;
+    QRegExp regexpDigit("[0-9][0-9]");
+    int gdowom = getDayOfWeekOfMonth(-1);
+    QDate currentDate = QDate::currentDate();
+
+    getCurrentLStrPrefix(slb, pql, currentDate.addDays(-1), tr("Вчера "));
     //обрабатываем дни недели: строки вида Вс1/11 - первое воскресенье ноября
     foreach(QString fs, pql)
     {
@@ -241,55 +283,55 @@ QString MainWindow::getResultYesterdayStr(QList<QString> pql)
         QString sMonthDigits = sDayOfWeekOfMonth.right(2);
         if (!sMonthDigits.contains(regexpDigit)) continue;
         int mnth = sMonthDigits.toInt();
-        if (mnth != 0 && mnth != QDate::currentDate().month()) continue;
+        if (mnth != 0 && mnth != currentDate.month()) continue;
 
         QString sDayOfWeek = fs.left(2);
         if (sDayOfWeek == tr("Пн"))
         {
-            if (QDate::currentDate().dayOfWeek() == 2)
-                sb += tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+            if (currentDate.dayOfWeek() == 2)
+                slb.append(tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
         }
         else
         {
             if (sDayOfWeek == tr("Вт"))
             {
-                if (QDate::currentDate().dayOfWeek() == 3)
-                    sb += tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                if (currentDate.dayOfWeek() == 3)
+                    slb.append(tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
             }
             else
             {
                 if (sDayOfWeek == tr("Ср"))
                 {
-                    if (QDate::currentDate().dayOfWeek() == 4)
-                        sb += tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                    if (currentDate.dayOfWeek() == 4)
+                        slb.append(tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                 }
                 else
                 {
                     if (sDayOfWeek == tr("Чт"))
                     {
-                        if (QDate::currentDate().dayOfWeek() == 5)
-                            sb += tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                        if (currentDate.dayOfWeek() == 5)
+                            slb.append(tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                     }
                     else
                     {
                         if (sDayOfWeek == tr("Пт"))
                         {
-                            if (QDate::currentDate().dayOfWeek() == 6)
-                                sb += tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                            if (currentDate.dayOfWeek() == 6)
+                                slb.append(tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                         }
                         else
                         {
                             if (sDayOfWeek == tr("Сб"))
                             {
-                                if (QDate::currentDate().dayOfWeek() == 7)
-                                    sb += tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                                if (currentDate.dayOfWeek() == 7)
+                                    slb.append(tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                             }
                             else
                             {
                                 if (sDayOfWeek == tr("Вс"))
                                 {
-                                    if (QDate::currentDate().dayOfWeek() == 1)
-                                        sb += tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                                    if (currentDate.dayOfWeek() == 1)
+                                        slb.append(tr("Вчера ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                                 }
                             }
                         }
@@ -304,50 +346,50 @@ QString MainWindow::getResultYesterdayStr(QList<QString> pql)
         QString sDayOfWeek = fs.left(3);
         if (sDayOfWeek == tr("Пн0"))
         {
-            if (QDate::currentDate().dayOfWeek() == 2)
-                sb += tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+            if (currentDate.dayOfWeek() == 2)
+                slb.append(tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
         }
         else
         {
             if (sDayOfWeek == tr("Вт0"))
             {
-                if (QDate::currentDate().dayOfWeek() == 3)
-                    sb += tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                if (currentDate.dayOfWeek() == 3)
+                    slb.append(tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
             }
             else
             {
                 if (sDayOfWeek == tr("Ср0"))
                 {
-                    if (QDate::currentDate().dayOfWeek() == 4)
-                        sb += tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                    if (currentDate.dayOfWeek() == 4)
+                        slb.append(tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                 }
                 else
                 {
                     if (sDayOfWeek == tr("Чт0"))
                     {
-                        if (QDate::currentDate().dayOfWeek() == 5)
-                            sb += tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                        if (currentDate.dayOfWeek() == 5)
+                            slb.append(tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                     }
                     else
                     {
                         if (sDayOfWeek == tr("Пт0"))
                         {
-                            if (QDate::currentDate().dayOfWeek() == 6)
-                                sb += tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                            if (currentDate.dayOfWeek() == 6)
+                                slb.append(tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                         }
                         else
                         {
                             if (sDayOfWeek == tr("Сб0"))
                             {
-                                if (QDate::currentDate().dayOfWeek() == 7)
-                                    sb += tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                                if (currentDate.dayOfWeek() == 7)
+                                    slb.append(tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                             }
                             else
                             {
                                 if (sDayOfWeek == tr("Вс0"))
                                 {
-                                    if (QDate::currentDate().dayOfWeek() == 1)
-                                        sb += tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                                    if (currentDate.dayOfWeek() == 1)
+                                        slb.append(tr("Вчера ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                                 }
                             }
                         }
@@ -356,32 +398,18 @@ QString MainWindow::getResultYesterdayStr(QList<QString> pql)
             }
         }
     }
-    if (sb != "")
-        return sb.left(sb.length() -1);
-    return sb;
+    //if (!sb.isEmpty()) return sb.left(sb.length() -1);
+    return slb;
 }
 //формируем строки "Сегодня"
-QString MainWindow::getResultTodayStr(QList<QString> pql)
+QStringList MainWindow::getResultTodayLStr(QList<QString> pql)
 {
-    QString sb = "";
+    QStringList slb;
     QRegExp regexpDigit("[0-9][0-9]");
     int gdowom = getDayOfWeekOfMonth(0);
+    QDate currentDate = QDate::currentDate();
 
-    foreach(QString fs, pql)
-    {
-        QString sDate = fs.left(10);
-        QDate dDate = QDate::fromString(sDate, "dd/MM/yyyy");
-        if (dDate.day() == QDate::currentDate().day() && dDate.month() == QDate::currentDate().month())
-        {
-            int iy = QDate::currentDate().year() - dDate.year();
-            QString st = "";//tr("Сегодня ") + fs.mid(10).trimmed() + " (" + QString::number(iy) + tr(" годовщина") + ")";
-            if (iy > 0)
-                st = tr("Сегодня ") + fs.mid(10).trimmed() + " (" + QString::number(iy) + tr(" годовщина") + ")";
-            else
-                st = tr("Сегодня ") + fs.mid(10).trimmed();
-            sb += st + "\n";
-        }
-    }
+    getCurrentLStrPrefix(slb, pql, currentDate, tr("Сегодня "));
     //обрабатываем дни недели: строки вида Вс1/11
     foreach(QString fs, pql)
     {
@@ -394,55 +422,55 @@ QString MainWindow::getResultTodayStr(QList<QString> pql)
         QString sMonthDigits = sDayOfWeekOfMonth.right(2);
         if (!sMonthDigits.contains(regexpDigit)) continue;
         int mnth = sMonthDigits.toInt();
-        if (mnth != 0 && mnth != QDate::currentDate().month()) continue;
+        if (mnth != 0 && mnth != currentDate.month()) continue;
 
         QString sDayOfWeek = fs.left(2);
         if (sDayOfWeek == tr("Пн"))
         {
-            if (QDate::currentDate().dayOfWeek() == 1)
-                sb += tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+            if (currentDate.dayOfWeek() == 1)
+                slb.append(tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
         }
         else
         {
             if (sDayOfWeek == tr("Вт"))
             {
-                if (QDate::currentDate().dayOfWeek() == 2)
-                    sb += tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                if (currentDate.dayOfWeek() == 2)
+                    slb.append(tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
             }
             else
             {
                 if (sDayOfWeek == tr("Ср"))
                 {
-                    if (QDate::currentDate().dayOfWeek() == 3)
-                        sb += tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                    if (currentDate.dayOfWeek() == 3)
+                        slb.append(tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                 }
                 else
                 {
                     if (sDayOfWeek == tr("Чт"))
                     {
-                        if (QDate::currentDate().dayOfWeek() == 4)
-                            sb += tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                        if (currentDate.dayOfWeek() == 4)
+                            slb.append(tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                     }
                     else
                     {
                         if (sDayOfWeek == tr("Пт"))
                         {
-                            if (QDate::currentDate().dayOfWeek() == 5)
-                                sb += tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                            if (currentDate.dayOfWeek() == 5)
+                                slb.append(tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                         }
                         else
                         {
                             if (sDayOfWeek == tr("Сб"))
                             {
-                                if (QDate::currentDate().dayOfWeek() == 6)
-                                    sb += tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                                if (currentDate.dayOfWeek() == 6)
+                                    slb.append(tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                             }
                             else
                             {
                                 if (sDayOfWeek == tr("Вс"))
                                 {
-                                    if (QDate::currentDate().dayOfWeek() == 7)
-                                        sb += tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                                    if (currentDate.dayOfWeek() == 7)
+                                        slb.append(tr("Сегодня ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                                 }
                             }
                         }
@@ -457,50 +485,50 @@ QString MainWindow::getResultTodayStr(QList<QString> pql)
         QString sDayOfWeek = fs.left(3);
         if (sDayOfWeek == tr("Пн0"))
         {
-            if (QDate::currentDate().dayOfWeek() == 1)
-                sb += tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+            if (currentDate.dayOfWeek() == 1)
+                slb.append(tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
         }
         else
         {
             if (sDayOfWeek == tr("Вт0"))
             {
-                if (QDate::currentDate().dayOfWeek() == 2)
-                    sb += tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                if (currentDate.dayOfWeek() == 2)
+                    slb.append(tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
             }
             else
             {
                 if (sDayOfWeek == tr("Ср0"))
                 {
-                    if (QDate::currentDate().dayOfWeek() == 3)
-                        sb += tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                    if (currentDate.dayOfWeek() == 3)
+                        slb.append(tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                 }
                 else
                 {
                     if (sDayOfWeek == tr("Чт0"))
                     {
-                        if (QDate::currentDate().dayOfWeek() == 4)
-                            sb += tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                        if (currentDate.dayOfWeek() == 4)
+                            slb.append(tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                     }
                     else
                     {
                         if (sDayOfWeek == tr("Пт0"))
                         {
-                            if (QDate::currentDate().dayOfWeek() == 5)
-                                sb += tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                            if (currentDate.dayOfWeek() == 5)
+                                slb.append(tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                         }
                         else
                         {
                             if (sDayOfWeek == tr("Сб0"))
                             {
-                                if (QDate::currentDate().dayOfWeek() == 6)
-                                    sb += tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                                if (currentDate.dayOfWeek() == 6)
+                                    slb.append(tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                             }
                             else
                             {
                                 if (sDayOfWeek == tr("Вс0"))
                                 {
-                                    if (QDate::currentDate().dayOfWeek() == 7)
-                                        sb += tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                                    if (currentDate.dayOfWeek() == 7)
+                                        slb.append(tr("Сегодня ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                                 }
                             }
                         }
@@ -510,33 +538,18 @@ QString MainWindow::getResultTodayStr(QList<QString> pql)
         }
     }
 
-    if (sb != "")
-        return sb.left(sb.length() -1);
-    return sb;
+    //if (sb != "") return sb.left(sb.length() -1);
+    return slb;
 }
 //формируем строки "Завтра"
-QString MainWindow::getResultTomorrowStr(QList<QString> pql)
+QStringList MainWindow::getResultTomorrowLStr(QList<QString> pql)
 {
-    QString sb = "";
+    QStringList slb;
     QRegExp regexpDigit("[0-9][0-9]");
     int gdowom = getDayOfWeekOfMonth(1);
+    QDate currentDate = QDate::currentDate();
 
-    foreach(QString fs, pql)
-    {
-        QString sDate = fs.left(10);
-        QDate dDate = QDate::fromString(sDate, "dd/MM/yyyy");
-        if (dDate.day() == QDate::currentDate().addDays(1).day() && dDate.month() == QDate::currentDate().addDays(1).month())
-        {
-            int iy = QDate::currentDate().year() - dDate.year();
-            QString st = "";//tr("Завтра ") + fs.mid(10).trimmed() + " (" + QString::number(iy) + tr(" годовщина") + ")";
-
-            if (iy > 0)
-                st = tr("Завтра ") + fs.mid(10).trimmed() + " (" + QString::number(iy) + tr(" годовщина") + ")";
-            else
-                st = tr("Завтра ") + fs.mid(10).trimmed();
-            sb += st + "\n";
-        }
-    }
+    getCurrentLStrPrefix(slb, pql, currentDate.addDays(1), tr("Завтра "));
 
     foreach(QString fs, pql)
     {
@@ -549,55 +562,55 @@ QString MainWindow::getResultTomorrowStr(QList<QString> pql)
         QString sMonthDigits = sDayOfWeekOfMonth.right(2);
         if (!sMonthDigits.contains(regexpDigit)) continue;
         int mnth = sMonthDigits.toInt();
-        if (mnth != 0 && mnth != QDate::currentDate().month()) continue;
+        if (mnth != 0 && mnth != currentDate.month()) continue;
 
         QString sDayOfWeek = fs.left(2);
         if (sDayOfWeek == tr("Пн"))
         {
-            if (QDate::currentDate().dayOfWeek() == 7)
-                sb += tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+            if (currentDate.dayOfWeek() == 7)
+                slb.append(tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
         }
         else
         {
             if (sDayOfWeek == tr("Вт"))
             {
-                if (QDate::currentDate().dayOfWeek() == 1)
-                    sb += tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                if (currentDate.dayOfWeek() == 1)
+                    slb.append(tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
             }
             else
             {
                 if (sDayOfWeek == tr("Ср"))
                 {
-                    if (QDate::currentDate().dayOfWeek() == 2)
-                        sb += tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                    if (currentDate.dayOfWeek() == 2)
+                        slb.append(tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                 }
                 else
                 {
                     if (sDayOfWeek == tr("Чт"))
                     {
-                        if (QDate::currentDate().dayOfWeek() == 3)
-                            sb += tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                        if (currentDate.dayOfWeek() == 3)
+                            slb.append(tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                     }
                     else
                     {
                         if (sDayOfWeek == tr("Пт"))
                         {
-                            if (QDate::currentDate().dayOfWeek() == 4)
-                                sb += tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                            if (currentDate.dayOfWeek() == 4)
+                                slb.append(tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                         }
                         else
                         {
                             if (sDayOfWeek == tr("Сб"))
                             {
-                                if (QDate::currentDate().dayOfWeek() == 5)
-                                    sb += tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                                if (currentDate.dayOfWeek() == 5)
+                                    slb.append(tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                             }
                             else
                             {
                                 if (sDayOfWeek == tr("Вс"))
                                 {
-                                    if (QDate::currentDate().dayOfWeek() == 6)
-                                        sb += tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed() + "\n";
+                                    if (currentDate.dayOfWeek() == 6)
+                                        slb.append(tr("Завтра ") + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
                                 }
                             }
                         }
@@ -612,50 +625,50 @@ QString MainWindow::getResultTomorrowStr(QList<QString> pql)
         QString sDayOfWeek = fs.left(3);
         if (sDayOfWeek == tr("Пн0"))
         {
-            if (QDate::currentDate().dayOfWeek() == 7)
-                sb += tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+            if (currentDate.dayOfWeek() == 7)
+                slb.append(tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
         }
         else
         {
             if (sDayOfWeek == tr("Вт0"))
             {
-                if (QDate::currentDate().dayOfWeek() == 1)
-                    sb += tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                if (currentDate.dayOfWeek() == 1)
+                    slb.append(tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
             }
             else
             {
                 if (sDayOfWeek == tr("Ср0"))
                 {
-                    if (QDate::currentDate().dayOfWeek() == 2)
-                        sb += tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                    if (currentDate.dayOfWeek() == 2)
+                        slb.append(tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                 }
                 else
                 {
                     if (sDayOfWeek == tr("Чт0"))
                     {
-                        if (QDate::currentDate().dayOfWeek() == 3)
-                            sb += tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                        if (currentDate.dayOfWeek() == 3)
+                            slb.append(tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                     }
                     else
                     {
                         if (sDayOfWeek == tr("Пт0"))
                         {
-                            if (QDate::currentDate().dayOfWeek() == 4)
-                                sb += tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                            if (currentDate.dayOfWeek() == 4)
+                                slb.append(tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                         }
                         else
                         {
                             if (sDayOfWeek == tr("Сб0"))
                             {
-                                if (QDate::currentDate().dayOfWeek() == 5)
-                                    sb += tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                                if (currentDate.dayOfWeek() == 5)
+                                    slb.append(tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                             }
                             else
                             {
                                 if (sDayOfWeek == tr("Вс0"))
                                 {
-                                    if (QDate::currentDate().dayOfWeek() == 6)
-                                        sb += tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed() + "\n";
+                                    if (currentDate.dayOfWeek() == 6)
+                                        slb.append(tr("Завтра ") + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
                                 }
                             }
                         }
@@ -665,9 +678,8 @@ QString MainWindow::getResultTomorrowStr(QList<QString> pql)
         }
     }
 
-    if (sb != "")
-        return sb.left(sb.length() -1);
-    return sb;
+    //if (sb != "") return sb.left(sb.length() -1);
+    return slb;
 }
 
 //разбираем, "день", "дня" или "дней", в зависимости от количества pdays
@@ -692,60 +704,63 @@ QString MainWindow::getDaysStr(int pdays)
     }
 }
 //формируем строки "Через N дней"
-QString MainWindow::getResultStr(QList<QString> pql, int pdays)
+QStringList MainWindow::getResultLStr(QList<QString> pql, int pdays)
 {
     if (pdays == -1)
-        return getResultYesterdayStr(pql);
+        return getResultYesterdayLStr(pql);
     if (pdays == 0)
-        return getResultTodayStr(pql);
+        return getResultTodayLStr(pql);
     if (pdays == 1)
-        return getResultTomorrowStr(pql);
+        return getResultTomorrowLStr(pql);
 
-    QString sb = "";
+    QStringList slb;
     QDate currentDate = QDate::currentDate();
     foreach(QString fs, pql)
     {
-        QString sDate = fs.left(10);
-        QDate dDate = QDate::fromString(sDate, "dd/MM/yyyy");
-        if (dDate.day() == currentDate.addDays(pdays).day() && dDate.month() == currentDate.addDays(pdays).month())
+        //QString sDate = fs.left(10);
+        //QDate dDate = QDate::fromString(sDate, "dd/MM/yyyy");
+        auto matchDate = regexpDt.match(fs);
+        auto pDate = currentDate.addDays(pdays);
+        if (matchDate.captured(1).toInt() == pDate.day() &&
+            matchDate.captured(2).toInt() == pDate.month())
         {
             QString st = "";
-            QStringList slDayMonth = sDate.left(5).split("/");
+            //QStringList slDayMonth = fs.left(5).split("/");
             QString sLocale = QLocale::system().name();
-            int iy = currentDate.year() - dDate.year();
+            int iy = matchDate.captured(3).isEmpty() ? 0 : matchDate.captured(3).toInt();
             if (iy > 0)
             {
+                iy = currentDate.year() - iy;//dDate.year();
                 if (sLocale == "en_US")
                 {
-                    //sb += tr("Через ") + QString::number(pdays) + tr(" дней (") + slDayMonth[1] + "/" + slDayMonth[0] + ") " + fs.mid(10).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")\n";
-                    st = tr("Через ") + QString::number(pdays) + tr(" дней (") + slDayMonth[1] + gDelimiter + slDayMonth[0] + ") " + fs.mid(10).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")";
+                    //slb.append(tr("Через ") + QString::number(pdays) + tr(" дней (") + slDayMonth[1] + "/" + slDayMonth[0] + ") " + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")\n";
+                    st = tr("Через ") + QString::number(pdays) + tr(" дней (") + matchDate.captured(2) + gDelimiter + matchDate.captured(1) + ") " + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")";
                 }
                 else
-                    //sb += tr("Через ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + sDate.left(5).replace("/", ".") + ") " + fs.mid(10).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")\n";
-                    st = tr("Через ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + sDate.left(5).replace("/", gDelimiter) + ") " + fs.mid(10).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")";
-                sb += st + "\n";
+                    //slb.append(tr("Через ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + sDate.left(5).replace("/", ".") + ") " + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")\n";
+                    st = tr("Через ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + fs.left(5).replace("/", gDelimiter) + ") " + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")";
+                slb.append(st);// + "\n";
             }
             else
             {
                 if (sLocale == "en_US")
                 {
-                    st = tr("Через ") + QString::number(pdays) + tr(" дней (") + slDayMonth[1] + gDelimiter + slDayMonth[0] + ") " + fs.mid(10).trimmed();
+                    st = tr("Через ") + QString::number(pdays) + tr(" дней (") + matchDate.captured(2) + gDelimiter + matchDate.captured(1) + ") " + fs.mid(matchDate.captured(0).length()).trimmed();
                 }
                 else
-                    st = tr("Через ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + sDate.left(5).replace("/", gDelimiter) + ") " + fs.mid(10).trimmed();
-                sb += st + "\n";
+                    st = tr("Через ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + fs.left(5).replace("/", gDelimiter) + ") " + fs.mid(matchDate.captured(0).length()).trimmed();
+                slb.append(st);// + "\n";
             }
             //заполняем список ql3
             //if (pdays == 2 || pdays == 3)
                 //ql3.append(st);
         }
     }
-    if (sb != "")
-        return sb.left(sb.length() -1);
-    return sb;
+    //if (sb != "") return sb.left(sb.length() -1);
+    return slb;
 }
 //Подсвечиваем цветом сегодняшнее
-void MainWindow::findTodayStrs(QPlainTextEdit *pte)
+/*void MainWindow::findTodayStrs(QPlainTextEdit *pte)
 {
     pte->moveCursor(QTextCursor::Start);
 
@@ -781,52 +796,58 @@ void MainWindow::findTodayStrs(QPlainTextEdit *pte)
         }
         cur = findCur;
     }
-}
+}*/
 
 //Обновляем главное окно
 void MainWindow::refreshWindows()
 {
+    qDebug() << "refreshWindows ";
     ui->plainTEditEvents->setPlainText("");
     ui->plainTEditDates->setPlainText("");
-
-    QString sbEv = "", sbDt = "";
+    currentDatesCount = 0;
+    currentEventsCount = 0;
+    //QString sbEv = "", sbDt = "";
 
     //for(int i = -1; i < gDays; i++)
         //sbDt += getResultStr(qlDates, i);
 
     for(int i = -1; i < gDays; i++)
     {
-        QString resDates = getResultStr(qlDates, i);
+        QStringList resDates = getResultLStr(qlDates, i);
         if (resDates.isEmpty()) continue;
 
         if (i == 0)
         {
-            resDates = resDates.replace("\n", "</font></div><div><font color=\"" + gsColorTodayText + "\">");
-            ui->plainTEditDates->appendHtml("<div><font color=\"" + gsColorTodayText + "\">" + resDates + "</font></div>");
+            auto sresDates = resDates.join("</font></div><div><font color=\"" + gsColorTodayText + "\">");
+            ui->plainTEditDates->appendHtml("<div><font color=\"" + gsColorTodayText + "\">" + sresDates + "</font></div>");
+            currentDatesCount+=resDates.size();
         }
         else
         {
-            resDates = resDates.replace("\n", "</font></div><div><font color=\"" + gsColorOtherText + "\">");
-            ui->plainTEditDates->appendHtml("<div><font color=\"" + gsColorOtherText + "\">" + resDates + "</font></div>");
+            auto sresDates = resDates.join("</font></div><div><font color=\"" + gsColorOtherText + "\">");
+            ui->plainTEditDates->appendHtml("<div><font color=\"" + gsColorOtherText + "\">" + sresDates + "</font></div>");
         }
     }
     for(int i = -1; i < gDays; i++)
     {
-        QString resEvents = getResultStr(qlEvents, i);
+        QStringList resEvents = getResultLStr(qlEvents, i);
         if (resEvents.isEmpty()) continue;
 
         if (i == 0)
         {
-            resEvents = resEvents.replace("\n", "</font></div><div><font color=\"" + gsColorTodayText + "\">");
-            ui->plainTEditEvents->appendHtml("<div><font color=\"" + gsColorTodayText + "\">" + resEvents + "</font></div>");
+            auto sresEvents = resEvents.join("</font></div><div><font color=\"" + gsColorTodayText + "\">");
+            ui->plainTEditEvents->appendHtml("<div><font color=\"" + gsColorTodayText + "\">" + sresEvents + "</font></div>");
+            currentEventsCount+=resEvents.size();
         }
         else
         {
-            resEvents = resEvents.replace("\n", "</font></div><div><font color=\"" + gsColorOtherText + "\">");
-            ui->plainTEditEvents->appendHtml("<div><font color=\"" + gsColorOtherText + "\">" + resEvents + "</font></div>");
+            auto sresEvents = resEvents.join("</font></div><div><font color=\"" + gsColorOtherText + "\">");
+            ui->plainTEditEvents->appendHtml("<div><font color=\"" + gsColorOtherText + "\">" + sresEvents + "</font></div>");
         }
         //sbEv += getResultStr(qlEvents, i);
     }
+    //qDebug() << "toolTip " << QString("Даты: %1, События: %2").arg(currentDatesCount).arg(currentEventsCount);
+    trayIcon->setToolTip(QString("Даты: %1\nСобытия: %2").arg(currentDatesCount).arg(currentEventsCount));
     //ui->plainTEditEvents->setPlainText(sbEv);
     //ui->plainTEditDates->setPlainText(sbDt);
     //подсвечиваем строки "сегодня"
@@ -841,26 +862,34 @@ QDateTime MainWindow::refreshTitle() {
     return currentTime;
 }
 //Обновляем окно афоризмов
-void MainWindow::refreshRuns()
+void MainWindow::refreshRuns(bool changeText)
 {
-    //QString sr = ui->plainTEditRuns->toPlainText();
-    //if (!qlRuns.isEmpty()) {
-    qsizetype i = rndRuns.generate64() % qlRuns.size();
-    QString snr = qlRuns.at(i);
-    //удаляем из общего списка выбранный
-    qlRuns.erase(qlRuns.begin() + i, qlRuns.begin() + i + 1);
-    ui->plainTEditRuns->setPlainText(snr);
-    //}
-    qDebug() << "qlRuns size " << qlRuns.size();
-    if (qlRuns.isEmpty() /*&& !sr.isEmpty()*/) {
-        //перезагружаем общий списк
-        setLstRuns();
+    if (changeText) {
+        qsizetype i = rndRuns.generate64() % qlRuns.size();
+        QString snr = qlRuns.at(i);
+        //удаляем из общего списка выбранный
+        qlRuns.erase(qlRuns.begin() + i, qlRuns.begin() + i + 1);
+        ui->plainTEditRuns->setPlainText("");
+        ui->plainTEditRuns->appendHtml("<div><font color=\"" + gsColorOtherText + "\">" + snr + "</font></div>");
+        qDebug() << "qlRuns size " << qlRuns.size();
+        if (qlRuns.isEmpty() /*&& !sr.isEmpty()*/) {
+            //перезагружаем общий списк
+            setLstRuns();
+        }
+    } else {
+        QString sr = ui->plainTEditRuns->toPlainText();
+        ui->plainTEditRuns->setPlainText("");
+        ui->plainTEditRuns->appendHtml("<div><font color=\"" + gsColorOtherText + "\">" + sr + "</font></div>");
+        //qDebug() << "refreshRuns " << sr;
     }
+    //ui->plainTEditRuns->scroll(0,0);
+    auto sb = ui->plainTEditRuns->horizontalScrollBar();
+    sb->setValue(0);
 }
 //Выбор цвета
 void MainWindow::on_actionColor_triggered()
 {
-    QColor tempColor = QColorDialog::getColor(gColorTodayText);
+    QColor tempColor = QColorDialog::getColor(gColorTodayText, this, tr("Color of Today dates"));
     if (tempColor.isValid())
     {
         gColorTodayText = tempColor;
@@ -877,7 +906,7 @@ void MainWindow::on_actionColor_triggered()
 void MainWindow::on_actionFont_triggered()
 {
     bool bOk;
-    QFont fnt = QFontDialog::getFont(&bOk);
+    QFont fnt = QFontDialog::getFont(&bOk, this);
     if (bOk)
     {//Сохраняем данные
         gSettings.setValue("/Font", fnt.family());
@@ -886,17 +915,18 @@ void MainWindow::on_actionFont_triggered()
         gSettings.setValue("/FontBold", fnt.bold()?fnt.Bold:-1);//без таких ухищрений Bold не работает
         ui->plainTEditDates->setFont(fnt);
         ui->plainTEditEvents->setFont(fnt);
+        ui->plainTEditRuns->setFont(fnt);
     }
 }
 //Обновляем окно каждую минуту
 void MainWindow::timerEvent(QTimerEvent *)
 {
-    QDateTime timeUpdate = refreshTitle();
-    auto diff = timeUpdate.toMSecsSinceEpoch() - lastUpdate.toMSecsSinceEpoch();
-    if (diff > 60000) {
-        //qDebug() << "refreshWindows " << diff;
+    QDate currentDate = refreshTitle().date();
+    //auto diff = currentTime.toMSecsSinceEpoch() - lastUpdate.toMSecsSinceEpoch();
+    //if (diff > 60000) {
+    if (currentDate.day() != lastDate.day()) {
         refreshWindows();
-        lastUpdate = timeUpdate;
+        lastDate = currentDate;
     }
     if (!qlRuns.isEmpty())
         refreshRuns();
@@ -923,7 +953,8 @@ void MainWindow::callDatesEventsFile(QList<QString>& pLst, QString pFilePath)
     disconnect(ui->plainTEditEvents, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenuEvents(const QPoint&)));
     disconnect(ui->plainTEditDates, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenuDates(const QPoint&)));
 
-    EditWindow *pew = new EditWindow(0, pFilePath);
+    EditWindow *pew = new EditWindow(this, pFilePath);
+    //if (gTray) pew->setWindowFlag(Qt::Tool, true);
     pew->exec();
     delete pew;
 
@@ -945,14 +976,25 @@ void MainWindow::on_actionEdit_triggered()
     refreshWindows();
 }
 
+/*void MainWindow::on_actionToolBar_triggered()
+{
+    qDebug() << "actionToolBar_triggered";
+    if (ui->mainToolBar->isVisible())
+        ui->mainToolBar->hide();
+    else
+        ui->mainToolBar->show();
+}*/
+
 void MainWindow::on_actionExit_triggered()
 {
-
+    //this->close();
+    QCoreApplication::quit();
 }
 //Выбор параметров "Напоминать за Х дней" и "Разделитель"
 void MainWindow::on_actionSettings_triggered()
 {
-    SettingsWindow *psw = new SettingsWindow(0, gDays, gDelimiter, gTray);
+    SettingsWindow *psw = new SettingsWindow(this, gDays, gDelimiter, gTray);
+    //if (gTray) psw->setWindowFlag(Qt::Tool, true);
     if(psw->exec() == QDialog::Rejected)
     {
         delete psw;
@@ -968,8 +1010,14 @@ void MainWindow::on_actionSettings_triggered()
     if (gDelimiter.length() != 1) gDelimiter = "/";
     gSettings.setValue("/Delimiter", gDelimiter);
 
-    gTray = psw->getTray();
-    gSettings.setValue("/Tray", gTray);
+    if(gTray != psw->getTray()) {
+        gTray = psw->getTray();
+        gSettings.setValue("/Tray", gTray);
+        if(gTray)
+          this->setWindowFlags(windowFlags() | Qt::Tool);
+        else
+          this->setWindowFlags(windowFlags() & ~Qt::Tool);
+    }
     delete psw;
 
     qlDates.clear();
@@ -984,13 +1032,13 @@ void MainWindow::on_actionSettings_triggered()
 //пункт меню "О Qt"
 void MainWindow::on_actionAbout_Qt_triggered()
 {
-    QMessageBox::aboutQt(0);
+    QMessageBox::aboutQt(this);
 }
 //Выводим нашу лицензию
 void MainWindow::on_actionLicense_triggered()
 {
-    LicenseWindow *plw = new LicenseWindow;
-
+    LicenseWindow *plw = new LicenseWindow(this);
+    //if (gTray) plw->setWindowFlag(Qt::Tool, true);
     plw->exec();
 
     delete plw;
@@ -998,8 +1046,8 @@ void MainWindow::on_actionLicense_triggered()
 //Окно "О программе"
 void MainWindow::on_actionAbout_triggered()
 {
-    AboutWindow * paw = new AboutWindow;
-
+    AboutWindow * paw = new AboutWindow(this);
+    //if (gTray) paw->setWindowFlag(Qt::Tool, true);
     paw->exec();
 
     delete paw;
@@ -1007,7 +1055,7 @@ void MainWindow::on_actionAbout_triggered()
 //Выбираем цвет 3
 void MainWindow::on_actionColor3_triggered()
 {
-    QColor tempColor = QColorDialog::getColor(gColorOtherText);
+    QColor tempColor = QColorDialog::getColor(gColorOtherText, this, tr("Color of Default dates"));
     if (tempColor.isValid())
     {
         gColorOtherText = tempColor;
@@ -1017,6 +1065,7 @@ void MainWindow::on_actionColor3_triggered()
 
         setGColor();
         refreshWindows();
+        refreshRuns(false);
     }
 }
 //Показываем кастомное контекстное меню для событий
@@ -1127,10 +1176,11 @@ void MainWindow::showContextMenuRunsCopy()
 //обрабатываем нажатие на иконку в трее
 void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
 {
+    //qDebug() << "iconActivated" << reason;
     switch (reason)
     {
     case QSystemTrayIcon::Trigger:
-        if(gTray)
+        //if(gTray)
         {
             if(!this->isVisible())
                 this->show();
@@ -1145,11 +1195,9 @@ void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
 //снимаем комментарии с прошедших событий
 void MainWindow::unCommentEvents()
 {
-    QRegExp regexp("^;[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9]");
+    QRegExp regexpDtComm("^;([0-9]{2})/([0-9]{2})/?([0-9]{0,4})");
 
     QList<QString> qlEvents, qlStneve;
-
-    bool commentExist = false;
 
     QFile fl(pathMan.eventsFilePath());
 
@@ -1166,9 +1214,10 @@ void MainWindow::unCommentEvents()
         fl.close();
     }
     //определяем, есть ли вообще комментарий нужного нам характера
+    bool commentExist = false;
     foreach(QString fs, qlEvents)
     {
-        if (fs.contains(regexp))
+        if (fs.contains(regexpDtComm))
         {
             commentExist = true;
             break;
@@ -1180,27 +1229,30 @@ void MainWindow::unCommentEvents()
     QDate currentDate = QDate::currentDate();
     foreach(QString fs, qlEvents)
     {
-            if (!fs.contains(regexp))
-            {
-                qlStneve << fs;
-                continue;
-            }
-            bool isWritten = false;
+        auto matchDate = regexpDtComm.match(fs);
+        if (!matchDate.hasMatch())
+        {
+            qlStneve << fs;
+            continue;
+        }
+        bool isWritten = false;
         //смотрим в прошлое на 31 день
-            for(int pdays = -31; pdays < 0; pdays++)
+        for(int pdays = -31; pdays < 0; pdays++)
+        {
+            auto pDate = currentDate.addDays(pdays);
+            //QString sDate = fs.left(11);
+            //sDate = sDate.right(sDate.length()-1);//убираем ведущую ;
+            //QDate dDate = QDate::fromString(sDate, "dd/MM/yyyy");
+            if (matchDate.captured(1).toInt() == pDate.day() &&
+                matchDate.captured(2).toInt() == pDate.month())
             {
-                QString sDate = fs.left(11);
-                sDate = sDate.right(sDate.length()-1);//убираем ведущую ;
-                QDate dDate = QDate::fromString(sDate, "dd/MM/yyyy");
-                if (dDate.day() == currentDate.addDays(pdays).day() && dDate.month() == currentDate.addDays(pdays).month())
-                {
-                    qlStneve << fs.right(fs.length()-1);//убираем ведущую ;
-                    isWritten = true;
-                    break;
-                }
+                qlStneve << fs.right(fs.length()-1);//убираем ведущую ;
+                isWritten = true;
+                break;
             }
-            if (!isWritten)
-                qlStneve << fs;
+        }
+        if (!isWritten)
+            qlStneve << fs;
     }//foreach(QString fs,
 
     if(fl.open(QIODevice::WriteOnly))
@@ -1232,4 +1284,25 @@ int MainWindow::getDayOfWeekOfMonth(int pCurDay)
                 return  dowom;
         }
     }
+}
+
+void MainWindow::on_actionToolBar_triggered()
+{
+    if (!gToolBar) {//ui->mainToolBar->isHidden()) {
+        gToolBar = true;
+        ui->mainToolBar->show();
+    } else {
+        gToolBar = false;
+        ui->mainToolBar->hide();
+    }
+    //qDebug() << "actionToolBar " << gToolBar;
+    /*ui->actionToolBar->setChecked(gToolBar);
+    gSettings.setValue("/ToolBar", gToolBar);*/
+}
+
+void MainWindow::handleToolBarVisibilityChange() {
+    gToolBar = !ui->mainToolBar->isHidden();
+    //qDebug() << "ToolBarVisibilityChange " << gToolBar;
+    ui->actionToolBar->setChecked(gToolBar);
+    gSettings.setValue("/ToolBar", gToolBar);
 }
