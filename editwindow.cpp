@@ -7,11 +7,12 @@
  */
 
 #include "editwindow.h"
+#include <QDir>
 #include "ui_editwindow.h"
 
 #include <QCoreApplication>
 #include <QDebug>
-#include <QTextCodec>
+//#include <QTextCodec>
 #include <QSettings>
 #include <QTextStream>
 #include <Qt>
@@ -44,9 +45,9 @@ void EditWindow::loadFile()
     QFile fl(gFileName);
     if (fl.open(QIODevice::ReadOnly))
     {
-        QByteArray sByteArray = fl.readAll();
-        QTextCodec *codec = QTextCodec::codecForName("CP1251");
-        QString sFileBody = codec->toUnicode(sByteArray);
+        //QByteArray sByteArray = fl.readAll();
+        //QTextCodec *codec = QTextCodec::codecForName("CP1251");
+        QString sFileBody = QString::fromUtf8(fl.readAll());//codec->toUnicode(sByteArray);
         ui->plainTextEdit->setPlainText(sFileBody);
         fl.close();
     }
@@ -71,7 +72,7 @@ void EditWindow::on_buttonBox_clicked(QAbstractButton *button)
         if (fl.open(QIODevice::WriteOnly))
         {
             QTextStream fileStream(&fl);
-            fileStream.setCodec("CP1251");
+            fileStream.setEncoding(QStringConverter::Utf8);//.setCodec("CP1251");
             fileStream << ui->plainTextEdit->toPlainText();
             if (fileStream.status() != QTextStream::Ok)
                 qDebug() << tr("Ошибка записи файла");

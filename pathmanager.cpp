@@ -30,7 +30,7 @@ PathManager::PathManager()
     // Путь к рабочим файлам (for Linux, in /home...)
     QString configPath =
 #if QT_VERSION >= 0x050000
-        QStandardPaths::writableLocation(QStandardPaths::DataLocation); // TODO 5.4 AppDataL
+        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 #else
         QDesktopServices::storageLocation( QDesktopServices::DataLocation);
 #endif

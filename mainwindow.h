@@ -14,6 +14,10 @@
 #include <QSettings>
 #include <QCloseEvent>
 #include <QSystemTrayIcon>
+#if QT_VERSION >= 0x050000
+#include <QRegularExpression>
+#define QRegExp QRegularExpression
+#endif
 #include "pathmanager.h"
 
 namespace Ui {

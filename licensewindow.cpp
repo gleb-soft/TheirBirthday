@@ -6,6 +6,7 @@
  *
  */
 #include "licensewindow.h"
+#include <QDir>
 #include "ui_licensewindow.h"
 
 #include <QTextStream>

@@ -13,7 +13,7 @@
 #include "licensewindow.h"
 #include "aboutwindow.h"
 
-#include <QTextCodec>
+//#include <QTextCodec>
 #include <QDate>
 #include <QDebug>
 #include <QFileInfo>
@@ -171,13 +171,13 @@ void MainWindow::setLst(const QString& path)
         fl.close();
     }
 
-    if (fl.open(QIODevice::ReadOnly))
+    if (fl.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        QTextCodec *codec = QTextCodec::codecForName("CP1251");
+        //QTextCodec *codec = QTextCodec::codecForName("CP1251");
         while(!fl.atEnd())
         {
-            QByteArray sBStr = fl.readLine();
-            QString sStr = codec->toUnicode(sBStr);
+            //QByteArray sBStr = fl.readLine();
+            QString sStr = fl.readLine();//codec->toUnicode(sBStr);
 
             if (sStr.contains(regexpDt) || sStr.contains(regexpDOW) || sStr.contains(regexpDOW0))
             {
@@ -1073,13 +1073,13 @@ void MainWindow::unCommentEvents()
 
     QFile fl(pathMan.eventsFilePath());
 
-    if (fl.open(QIODevice::ReadOnly))
+    if (fl.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        QTextCodec *codec = QTextCodec::codecForName("CP1251");
+        //QTextCodec *codec = QTextCodec::codecForName("CP1251");
         while(!fl.atEnd())
         {
-            QByteArray sBStr = fl.readLine();
-            QString sStr = codec->toUnicode(sBStr);
+            //QByteArray sBStr = fl.readLine();
+            QString sStr = fl.readLine();//codec->toUnicode(sBStr);
 
             qlEvents << sStr;
         }
@@ -1127,7 +1127,7 @@ void MainWindow::unCommentEvents()
         foreach(QString sStneve, qlStneve)
         {
             QTextStream fileStream(&fl);
-            fileStream.setCodec("CP1251");
+            fileStream.setEncoding(QStringConverter::Utf8);//setCodec("CP1251");
             fileStream << sStneve;
         }
         fl.close();
