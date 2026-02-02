@@ -63,8 +63,11 @@ private slots:
 
     void on_actionToolBar_triggered();
 
+    void on_actionMenuBar_triggered();
+
     void handleToolBarVisibilityChange();
 
+    void onHeaderContextMenu(const QPoint &pos);
     void showContextMenuEvents(const QPoint& pos);
     void showContextMenuDates(const QPoint& pos);
     void showContextMenuRuns(const QPoint& pos);
@@ -83,6 +86,7 @@ private:
     QRandomGenerator rndRuns;
     void refreshWindows();
     QDateTime refreshTitle();
+    void refreshTrayIcon();
     void refreshRuns(bool changeText = true);
     void setLst(const QString& path, const PathManager::FileType &type);
     void setLstEvents();
@@ -90,10 +94,10 @@ private:
     void setLstRuns();
     QString getDaysStr(int pDays);
     void getCurrentLStrPrefix(QStringList &slb, const QList<QString> &pql, const QDate &currentDate, QString prefix);
-    QStringList getResultLStr(QList<QString>, int pdays);
-    QStringList getResultTodayLStr(QList<QString>);
-    QStringList getResultYesterdayLStr(QList<QString>);
-    QStringList getResultTomorrowLStr(QList<QString>);
+    QStringList getResultLStr(QList<QString>, int pdays, bool isEvent = false);
+    QStringList getResultTodayLStr(QList<QString>, bool isEvent);
+    QStringList getResultYesterdayLStr(QList<QString>, bool isEvent);
+    QStringList getResultTomorrowLStr(QList<QString>, bool isEvent);
     //QString getResult3Str(QList<QString>);
     int getDayOfWeekOfMonth(int pCurDay = 0);
     void findTodayStrs(QPlainTextEdit *);
@@ -116,11 +120,14 @@ private:
     int currentEventsCount;
     QString gDelimiter;
     bool gTray;
+    bool gTrayIconDate;
+    bool gMenuBar;
     bool gToolBar;
     QSettings gSettings;
     PathManager pathMan;
     QDate lastDate;
-    const QRegExp regexpDt;
+    const QRegularExpression regexpDt;
+    QIcon dateIcon;
     QSystemTrayIcon* trayIcon;
 };
 

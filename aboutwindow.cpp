@@ -15,6 +15,7 @@ AboutWindow::AboutWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->lwContributors->addItem(tr("AppImage image, bugfixes and improvements: Mikhail Zvyozdochkin aka Dark Hobbit"));
     ui->lwContributors->addItem(tr("bugfixies and improvements: chukcha"));
+    ui->lwContributors->addItem(tr("Add aphorisms, date tray icon, bugfixes and improvements: glebsoft@yandex.ru"));
 }
 
 AboutWindow::~AboutWindow()

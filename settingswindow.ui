@@ -6,52 +6,28 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>142</height>
+    <width>440</width>
+    <height>179</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Прочие настройки</string>
+   <string>Settings</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="2">
-    <widget class="QSpinBox" name="spinBox">
-     <property name="minimum">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <number>364</number>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QLabel" name="label">
+   <item row="2" column="1">
+    <widget class="QCheckBox" name="checkBoxCloseInTray">
      <property name="text">
-      <string>Напоминать за</string>
+      <string>Close to systray</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="3">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>дней                                    </string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="3">
+   <item row="4" column="3">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1" colspan="2">
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>Разделитель для отображения</string>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>
@@ -65,10 +41,41 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
-    <widget class="QCheckBox" name="checkBox">
+   <item row="0" column="3">
+    <widget class="QLabel" name="label_2">
      <property name="text">
-      <string>Сворачивать в трей</string>
+      <string>days                                    </string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QSpinBox" name="spinBox">
+     <property name="minimum">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <number>364</number>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Remind</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1" colspan="2">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Delimiter for view</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QCheckBox" name="checkBoxDateInTray">
+     <property name="text">
+      <string>Show date in systray</string>
      </property>
     </widget>
    </item>

@@ -38,6 +38,11 @@
         <source>bugfixies and improvements: chukcha</source>
         <translation>исправления ошибок и предложения по улучшениям: chukcha</translation>
     </message>
+    <message>
+        <location filename="aboutwindow.cpp" line="18"/>
+        <source>Add aphorisms, date tray icon, bugfixes and improvements: glebsoft@yandex.ru</source>
+        <translation>Добавление афоризмов, добавление иконки с датой в трее, исправление ошибок и улучшения: glebsoft@yandex.ru</translation>
+    </message>
 </context>
 <context>
     <name>EditWindow</name>
@@ -86,6 +91,17 @@
         <location filename="mainwindow.ui" line="72"/>
         <source>View</source>
         <translation>Вид</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="243"/>
+        <source>Menu Bar</source>
+        <translation>Панель меню</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="232"/>
+        <location filename="mainwindow.cpp" line="53"/>
+        <source>Tool Bar</source>
+        <translation>Панель инструментов</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="84"/>
@@ -206,6 +222,22 @@
         <location filename="mainwindow.cpp" line="335"/>
         <source>Вчера </source>
         <translation>Вчера </translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="310"/>
+        <source>поздравили </source>
+        <translation>поздравили </translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="378"/>
+        <source>поздравляем </source>
+        <translation>поздравляем </translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="447"/>
+        <location filename="mainwindow.cpp" line="543"/>
+        <source>поздравим </source>
+        <translation>поздравим </translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="239"/>
@@ -417,22 +449,22 @@
     <name>SettingsWindow</name>
     <message>
         <location filename="settingswindow.ui" line="14"/>
-        <source>Прочие настройки</source>
+        <source>Settings</source>
         <translation>Прочие настройки</translation>
     </message>
     <message>
         <location filename="settingswindow.ui" line="30"/>
-        <source>Напоминать за</source>
+        <source>Remind</source>
         <translation>Напоминать за</translation>
     </message>
     <message>
         <location filename="settingswindow.ui" line="37"/>
-        <source>дней                                    </source>
+        <source>days                                    </source>
         <translation>дней                                    </translation>
     </message>
     <message>
         <location filename="settingswindow.ui" line="54"/>
-        <source>Разделитель для отображения</source>
+        <source>Delimiter for view</source>
         <translation>Разделитель для отображения</translation>
     </message>
     <message>
@@ -442,8 +474,13 @@
     </message>
     <message>
         <location filename="settingswindow.ui" line="71"/>
-        <source>Сворачивать в трей</source>
+        <source>Close to systray</source>
         <translation>Сворачивать в трей</translation>
+    </message>
+    <message>
+        <location filename="settingswindow.ui" line="78"/>
+        <source>Show date in systray</source>
+        <translation>Показывать дату в трее</translation>
     </message>
 </context>
 </TS>

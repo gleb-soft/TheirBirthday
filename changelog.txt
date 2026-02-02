@@ -1,3 +1,17 @@
+Version 0.0.10
+
+Some Bugfixies.
+Improvement:
+- add show date in TrayIcon
+- add show info in TrayIcon tooltip
+- add show aphorisms (file runs.txt)
+- show date and time in title
+- add support dates format "dd/MM"
+- add menu show/hide MenuBar & ToolBar
+- add event prefix "congratulate "
+- change files encoding to utf-8
+
+
 Version 0.0.9
 
 Some Bugfixies.

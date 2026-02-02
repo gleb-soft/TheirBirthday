@@ -128,7 +128,7 @@ void EditWindow::keyPressEvent(QKeyEvent *ev)
             ui->plainTextEdit->moveCursor(QTextCursor::Start);
             curPos = ui->plainTextEdit->textCursor();
 
-            sWord = QInputDialog::getText(NULL, tr("Поиск"), tr("Найти:"), QLineEdit::Normal, "", &bOk);
+            sWord = QInputDialog::getText(this, tr("Поиск"), tr("Найти:"), QLineEdit::Normal, "", &bOk);
             if(!bOk)
                 return;
 

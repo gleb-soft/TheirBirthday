@@ -20,7 +20,7 @@
    <string>Their Birthday</string>
   </property>
   <property name="windowIcon">
-   <iconset>
+   <iconset resource="TheirBirthday.qrc">
     <normaloff>:/new/files/TheirBirthday.ico</normaloff>:/new/files/TheirBirthday.ico</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -120,7 +120,7 @@
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>?</string>
     </property>
@@ -133,11 +133,12 @@
     <property name="title">
      <string>View</string>
     </property>
+    <addaction name="actionMenuBar"/>
     <addaction name="actionToolBar"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
-   <addaction name="menu"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <property name="allowedAreas">
@@ -160,7 +161,7 @@
   </action>
   <action name="actionFont">
    <property name="icon">
-    <iconset>
+    <iconset resource="TheirBirthday.qrc">
      <normaloff>:/new/files/font.ico</normaloff>:/new/files/font.ico</iconset>
    </property>
    <property name="text">
@@ -169,7 +170,7 @@
   </action>
   <action name="actionColor">
    <property name="icon">
-    <iconset>
+    <iconset resource="TheirBirthday.qrc">
      <normaloff>:/new/files/today.ico</normaloff>:/new/files/today.ico</iconset>
    </property>
    <property name="text">
@@ -181,7 +182,7 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset>
+    <iconset resource="TheirBirthday.qrc">
      <normaloff>:/new/files/exit.ico</normaloff>:/new/files/exit.ico</iconset>
    </property>
    <property name="text">
@@ -210,7 +211,7 @@
   </action>
   <action name="actionColor3">
    <property name="icon">
-    <iconset>
+    <iconset resource="TheirBirthday.qrc">
      <normaloff>:/new/files/yesterday.ico</normaloff>:/new/files/yesterday.ico</iconset>
    </property>
    <property name="text">
@@ -224,12 +225,28 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>ToolBar</string>
+    <string>Tool Bar</string>
+   </property>
+  </action>
+  <action name="actionMenuBar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Menu Bar</string>
    </property>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="TheirBirthday.qrc"/>
+ </resources>
  <connections/>
 </ui>

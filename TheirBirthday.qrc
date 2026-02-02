@@ -10,5 +10,6 @@
         <file>font.ico</file>
         <file>today.ico</file>
         <file>yesterday.ico</file>
+        <file>tray.ico</file>
     </qresource>
 </RCC>

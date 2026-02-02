@@ -38,6 +38,11 @@
         <source>bugfixies and improvements: chukcha</source>
         <translation>bugfixies and improvements: chukcha</translation>
     </message>
+    <message>
+        <location filename="aboutwindow.cpp" line="18"/>
+        <source>Add aphorisms, date tray icon, bugfixes and improvements: glebsoft@yandex.ru</source>
+        <translation>Add aphorisms, date tray icon, bugfixes and improvements: glebsoft@yandex.ru</translation>
+    </message>
 </context>
 <context>
     <name>EditWindow</name>
@@ -340,6 +345,22 @@
         <translation>Tomorrow </translation>
     </message>
     <message>
+        <location filename="mainwindow.cpp" line="310"/>
+        <source>поздравили </source>
+        <translation>congratulated </translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="378"/>
+        <source>поздравляем </source>
+        <translation>congratulate </translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="447"/>
+        <location filename="mainwindow.cpp" line="543"/>
+        <source>поздравим </source>
+        <translation>congratulate </translation>
+    </message>
+    <message>
         <location filename="mainwindow.cpp" line="665"/>
         <location filename="mainwindow.cpp" line="676"/>
         <source>дней</source>
@@ -410,22 +431,22 @@
     <name>SettingsWindow</name>
     <message>
         <location filename="settingswindow.ui" line="14"/>
-        <source>Прочие настройки</source>
+        <source>Settings</source>
         <translation>Settings</translation>
     </message>
     <message>
         <location filename="settingswindow.ui" line="30"/>
-        <source>Напоминать за</source>
+        <source>Remind</source>
         <translation>Remind</translation>
     </message>
     <message>
         <location filename="settingswindow.ui" line="37"/>
-        <source>дней                                    </source>
+        <source>days                                    </source>
         <translation>days                                    </translation>
     </message>
     <message>
         <location filename="settingswindow.ui" line="54"/>
-        <source>Разделитель для отображения</source>
+        <source>Delimiter for view</source>
         <translation>Delimiter for view</translation>
     </message>
     <message>
@@ -435,8 +456,13 @@
     </message>
     <message>
         <location filename="settingswindow.ui" line="71"/>
-        <source>Сворачивать в трей</source>
+        <source>Close to systray</source>
         <translation>Close to systray</translation>
+    </message>
+    <message>
+        <location filename="settingswindow.ui" line="78"/>
+        <source>Show date in systray</source>
+        <translation>Show date in systray</translation>
     </message>
 </context>
 </TS>
