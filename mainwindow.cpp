@@ -29,17 +29,22 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow), gSettings("TheirBirthdaySoft","TheirBirthday"),
+    ui(new Ui::MainWindow),
+    rndRuns(QRandomGenerator::global()->generate()),
+    gSettings("TheirBirthdaySoft","TheirBirthday"),
     pathMan()
 {
     ui->setupUi(this);
+    lastUpdate = QDateTime::currentDateTime(); //QDateTime::fromSecsSinceEpoch(0);
     connect(ui->actionExit, SIGNAL(triggered()), this, SLOT(close()));
     //задаём кастомное контекстное меню в полуокнах
     ui->plainTEditEvents->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->plainTEditEvents, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenuEvents(const QPoint&)));
-
     ui->plainTEditDates->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->plainTEditDates, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenuDates(const QPoint&)));
+    ui->plainTEditRuns->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->plainTEditRuns, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenuRuns(const QPoint&)));
+    ui->plainTEditRuns->setLineWrapMode(QPlainTextEdit::NoWrap);
     //обрабатываем иконку трея
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setIcon(QIcon(":/new/files/TheirBirthday.ico"));
@@ -86,13 +91,17 @@ MainWindow::MainWindow(QWidget *parent) :
     //запоминаем наши даты и события
     setLstEvents();
     setLstDates();
+    setLstRuns();
 
     setWindowFont();
     setGColor();
     setWindowSize();
 
     refreshWindows();
-    startTimer(60000);
+    refreshTitle();
+    if (!qlRuns.isEmpty())
+        refreshRuns();
+    startTimer(30000);
 }
 
 MainWindow::~MainWindow()
@@ -159,7 +168,7 @@ void MainWindow::setWindowSize()
     this->setGeometry(iX , iY, frmWidth, frmHeight);
 }
 //заполняем полуокно по переданному имени файла
-void MainWindow::setLst(const QString& path)
+void MainWindow::setLst(const QString& path, const PathManager::FileType &type)
 {
     QRegExp regexpDt("^[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9]");
     QRegExp regexpDOW0("^[А-Я][а-я][0-9]");
@@ -178,27 +187,33 @@ void MainWindow::setLst(const QString& path)
         {
             //QByteArray sBStr = fl.readLine();
             QString sStr = fl.readLine();//codec->toUnicode(sBStr);
-
-            if (sStr.contains(regexpDt) || sStr.contains(regexpDOW) || sStr.contains(regexpDOW0))
+            if (type == PathManager::FileType::Runs) {
+                if (!sStr.startsWith(";"))
+                    qlRuns << sStr;
+            } else if (sStr.contains(regexpDt) || sStr.contains(regexpDOW) || sStr.contains(regexpDOW0))
             {
-                if (path.contains("events.txt"))
+                if (type == PathManager::FileType::Events) //path.endsWith("events.txt"))
                     qlEvents << sStr;
-                else
-                    qlDates << sStr;
+                else qlDates << sStr;
             }
         }
         fl.close();
     }
 }
-//Заполняем События (нижнее окно)
-void MainWindow::setLstEvents()
-{
-    setLst(pathMan.eventsFilePath());
-}
 //Заполняем Даты (верхнее окно)
 void MainWindow::setLstDates()
 {
-    setLst(pathMan.datesFilePath());
+    setLst(pathMan.datesFilePath(), PathManager::FileType::Dates);
+}
+//Заполняем События (среднеее окно)
+void MainWindow::setLstEvents()
+{
+    setLst(pathMan.eventsFilePath(), PathManager::FileType::Events);
+}
+//Заполняем Афоризмы (нижнее окно)
+void MainWindow::setLstRuns()
+{
+    setLst(pathMan.runsFilePath(), PathManager::FileType::Runs);
 }
 //формируем строки "Вчера"
 QString MainWindow::getResultYesterdayStr(QList<QString> pql)
@@ -687,16 +702,17 @@ QString MainWindow::getResultStr(QList<QString> pql, int pdays)
         return getResultTomorrowStr(pql);
 
     QString sb = "";
+    QDate currentDate = QDate::currentDate();
     foreach(QString fs, pql)
     {
         QString sDate = fs.left(10);
         QDate dDate = QDate::fromString(sDate, "dd/MM/yyyy");
-        if (dDate.day() == QDate::currentDate().addDays(pdays).day() && dDate.month() == QDate::currentDate().addDays(pdays).month())
+        if (dDate.day() == currentDate.addDays(pdays).day() && dDate.month() == currentDate.addDays(pdays).month())
         {
             QString st = "";
             QStringList slDayMonth = sDate.left(5).split("/");
             QString sLocale = QLocale::system().name();
-            int iy = QDate::currentDate().year() - dDate.year();
+            int iy = currentDate.year() - dDate.year();
             if (iy > 0)
             {
                 if (sLocale == "en_US")
@@ -811,12 +827,35 @@ void MainWindow::refreshWindows()
         }
         //sbEv += getResultStr(qlEvents, i);
     }
-
     //ui->plainTEditEvents->setPlainText(sbEv);
     //ui->plainTEditDates->setPlainText(sbDt);
     //подсвечиваем строки "сегодня"
     //findTodayStrs(ui->plainTEditEvents);
     //findTodayStrs(ui->plainTEditDates);
+}
+//Обновляем заголовок окна
+QDateTime MainWindow::refreshTitle() {
+    QDateTime currentTime = QDateTime::currentDateTime();
+    QString wtitle = currentTime.toString("dddd, d MMMM yyyy hh:mm");
+    this->setWindowTitle(wtitle);
+    return currentTime;
+}
+//Обновляем окно афоризмов
+void MainWindow::refreshRuns()
+{
+    //QString sr = ui->plainTEditRuns->toPlainText();
+    //if (!qlRuns.isEmpty()) {
+    qsizetype i = rndRuns.generate64() % qlRuns.size();
+    QString snr = qlRuns.at(i);
+    //удаляем из общего списка выбранный
+    qlRuns.erase(qlRuns.begin() + i, qlRuns.begin() + i + 1);
+    ui->plainTEditRuns->setPlainText(snr);
+    //}
+    qDebug() << "qlRuns size " << qlRuns.size();
+    if (qlRuns.isEmpty() /*&& !sr.isEmpty()*/) {
+        //перезагружаем общий списк
+        setLstRuns();
+    }
 }
 //Выбор цвета
 void MainWindow::on_actionColor_triggered()
@@ -852,7 +891,15 @@ void MainWindow::on_actionFont_triggered()
 //Обновляем окно каждую минуту
 void MainWindow::timerEvent(QTimerEvent *)
 {
-    refreshWindows();
+    QDateTime timeUpdate = refreshTitle();
+    auto diff = timeUpdate.toMSecsSinceEpoch() - lastUpdate.toMSecsSinceEpoch();
+    if (diff > 60000) {
+        //qDebug() << "refreshWindows " << diff;
+        refreshWindows();
+        lastUpdate = timeUpdate;
+    }
+    if (!qlRuns.isEmpty())
+        refreshRuns();
 }
 //обрабатываем изменение размера окна
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -1012,6 +1059,26 @@ void MainWindow::showContextMenuDates(const QPoint& pos)
 
     myMenu.exec(globalPos);
 }
+//Показываем кастомное контекстное меню для афоризмов
+void MainWindow::showContextMenuRuns(const QPoint& pos)
+{
+    QPoint globalPos = ui->plainTEditRuns->mapToGlobal(pos);
+    QMenu myMenu;
+
+    QAction* copyAction = new QAction(tr("Копировать"), this);
+    //QAction* selectAllAction = new QAction(tr("Выделить всё"), this);
+    QAction* editAction  = new QAction(tr("Редактировать..."), this);
+
+    myMenu.addAction(copyAction);
+    //myMenu.addAction(selectAllAction);
+    myMenu.addAction(editAction);
+
+    connect(copyAction, &QAction::triggered, this, &MainWindow::showContextMenuRunsCopy);
+    //connect(selectAllAction, &QAction::triggered, this, &MainWindow::showContextMenuRunsSelectAll);
+    connect(editAction, &QAction::triggered, this, &MainWindow::editContextMenuRuns);
+
+    myMenu.exec(globalPos);
+}
 //Обрабатываем редактирование событий
 void MainWindow::editContextMenuEvents()
 {
@@ -1022,6 +1089,13 @@ void MainWindow::editContextMenuDates()
 {
     callDatesEventsFile(qlDates, pathMan.datesFilePath());
     setLstDates();
+    refreshWindows();
+}
+//Обрабатываем редактирование афоризмов
+void MainWindow::editContextMenuRuns()
+{
+    callDatesEventsFile(qlRuns, pathMan.runsFilePath());
+    setLstRuns();
     refreshWindows();
 }
 //пользовательские контекстные меню
@@ -1043,6 +1117,12 @@ void MainWindow::showContextMenuEventsCopy()
 void MainWindow::showContextMenuEventsSelectAll()
 {
     ui->plainTEditEvents->selectAll();
+}
+
+void MainWindow::showContextMenuRunsCopy()
+{
+    ui->plainTEditRuns->selectAll();
+    ui->plainTEditRuns->copy();
 }
 //обрабатываем нажатие на иконку в трее
 void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
@@ -1097,6 +1177,7 @@ void MainWindow::unCommentEvents()
     //если комментарий такой есть
     if (!commentExist) return;
 
+    QDate currentDate = QDate::currentDate();
     foreach(QString fs, qlEvents)
     {
             if (!fs.contains(regexp))
@@ -1111,7 +1192,7 @@ void MainWindow::unCommentEvents()
                 QString sDate = fs.left(11);
                 sDate = sDate.right(sDate.length()-1);//убираем ведущую ;
                 QDate dDate = QDate::fromString(sDate, "dd/MM/yyyy");
-                if (dDate.day() == QDate::currentDate().addDays(pdays).day() && dDate.month() == QDate::currentDate().addDays(pdays).month())
+                if (dDate.day() == currentDate.addDays(pdays).day() && dDate.month() == currentDate.addDays(pdays).month())
                 {
                     qlStneve << fs.right(fs.length()-1);//убираем ведущую ;
                     isWritten = true;

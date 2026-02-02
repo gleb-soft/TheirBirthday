@@ -7,12 +7,12 @@
     <x>0</x>
     <y>0</y>
     <width>578</width>
-    <height>363</height>
+    <height>379</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>578</width>
+    <width>478</width>
     <height>363</height>
    </size>
   </property>
@@ -31,7 +31,6 @@
        <font>
         <family>MS Sans Serif</family>
         <pointsize>9</pointsize>
-        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -46,12 +45,54 @@
        <font>
         <family>MS Sans Serif</family>
         <pointsize>9</pointsize>
-        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
       <property name="readOnly">
        <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QPlainTextEdit" name="plainTEditRuns">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>40</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>60</height>
+       </size>
+      </property>
+      <property name="inputMethodHints">
+       <set>Qt::InputMethodHint::ImhNoEditMenu</set>
+      </property>
+      <property name="lineWidth">
+       <number>1</number>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
+      </property>
+      <property name="undoRedoEnabled">
+       <bool>false</bool>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+      <property name="textInteractionFlags">
+       <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
       </property>
      </widget>
     </item>
@@ -63,7 +104,7 @@
      <x>0</x>
      <y>0</y>
      <width>578</width>
-     <height>20</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

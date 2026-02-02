@@ -15,16 +15,24 @@ class PathManager
 {
 public:
     PathManager();
+
+    enum class FileType {
+        Dates,
+        Events,
+        Runs
+    };
     QString datesFilePath(); // путь к файлу государственных и других общих праздников
     QString eventsFilePath(); // путь к файлу дней рождения и других личных праздников
+    QString runsFilePath(); // путь к файлу афоризмов
     bool ok(); // обработка ошибок
     QString errString();
 private:
     const QString datesFileName = "dates.txt";
     const QString eventsFileName = "events.txt";
+    const QString runsFileName = "runs.txt";
     bool _ok;
     QString _errString;
-    QString configPath, _datesFilePath, _eventsFilePath;
+    QString configPath, _datesFilePath, _eventsFilePath, _runsFilePath;
 };
 
 #endif // PATHMANAGER_H

@@ -38,6 +38,7 @@ PathManager::PathManager()
     //return; //===>
     _datesFilePath = configPath+QDir::separator()+datesFileName;
     _eventsFilePath = configPath+QDir::separator()+eventsFileName;
+    _runsFilePath = configPath+QDir::separator()+runsFileName;
     // Файл дат копируем, если первый запуск
     QDir d;
     if (!d.exists(configPath))
@@ -61,6 +62,14 @@ PathManager::PathManager()
             return;
         }
     }
+    // Файл афоризмов - аналогично
+    if (!QFile::exists(_runsFilePath)) {
+        QString runsTemplatePath = templPath + QDir::separator()+runsFileName;
+        if (!QFile::copy(runsTemplatePath, _runsFilePath)) {
+            _errString = QObject::tr("Не могу скопировать файл %1").arg(runsTemplatePath);
+            return;
+        }
+    }
     _ok = true;
 }
 
@@ -72,6 +81,11 @@ QString PathManager::datesFilePath()
 QString PathManager::eventsFilePath()
 {
     return _eventsFilePath;
+}
+
+QString PathManager::runsFilePath()
+{
+    return _runsFilePath;
 }
 
 bool PathManager::ok()

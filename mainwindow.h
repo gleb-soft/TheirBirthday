@@ -12,12 +12,14 @@
 #include <QMainWindow>
 #include <QPlainTextEdit>
 #include <QSettings>
+#include <QDateTime>
 #include <QCloseEvent>
 #include <QSystemTrayIcon>
 #if QT_VERSION >= 0x050000
 #include <QRegularExpression>
 #define QRegExp QRegularExpression
 #endif
+#include <QRandomGenerator>
 #include "pathmanager.h"
 
 namespace Ui {
@@ -59,20 +61,27 @@ private slots:
 
     void showContextMenuEvents(const QPoint& pos);
     void showContextMenuDates(const QPoint& pos);
+    void showContextMenuRuns(const QPoint& pos);
     void editContextMenuEvents();
     void editContextMenuDates();
+    void editContextMenuRuns();
     void showContextMenuDatesCopy();
     void showContextMenuDatesSelectAll();
     void showContextMenuEventsCopy();
     void showContextMenuEventsSelectAll();
+    void showContextMenuRunsCopy();
     void iconActivated(QSystemTrayIcon::ActivationReason reason);
 
 private:
     Ui::MainWindow *ui;
+    QRandomGenerator rndRuns;
     void refreshWindows();
-    void setLst(const QString& path);
+    QDateTime refreshTitle();
+    void refreshRuns();
+    void setLst(const QString& path, const PathManager::FileType &type);
     void setLstEvents();
     void setLstDates();
+    void setLstRuns();
     QString getDaysStr(int pDays);
     QString getResultStr(QList<QString>, int pdays);
     QString getResultTodayStr(QList<QString>);
@@ -88,6 +97,7 @@ private:
     void unCommentEvents();
     QList<QString> qlEvents;
     QList<QString> qlDates;
+    QList<QString> qlRuns;
     QList<QString> qlToday;
     QList<QString> ql3;
     QColor gColorTodayText;
@@ -99,6 +109,7 @@ private:
     bool gTray;
     QSettings gSettings;
     PathManager pathMan;
+    QDateTime lastUpdate;
     QSystemTrayIcon* trayIcon;
 };
 
