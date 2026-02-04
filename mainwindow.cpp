@@ -76,8 +76,8 @@ MainWindow::MainWindow(QWidget *parent) :
     trayIcon->setToolTip("TheirBirthday");
     //контекстное меню трея
     QMenu * menu = new QMenu(this);
-    QAction * viewWindow = new QAction(tr("Развернуть окно"), this);
-    QAction * quitAction = new QAction(tr("Выход"), this);
+    QAction * viewWindow = new QAction(tr("Show window"), this);
+    QAction * quitAction = new QAction(tr("Exit"), this);
     quitAction->setIcon(ui->actionExit->icon());
 
     connect(viewWindow, SIGNAL(triggered()), this, SLOT(show()));
@@ -110,7 +110,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // Прочтены ли файлы
     if (!pathMan.ok())
     {
-        QMessageBox::critical(this, tr("Ошибка"), pathMan.errString());
+        QMessageBox::critical(this, tr("Error"), pathMan.errString());
         return;
     }
     //снимаем комменты с прошедших событий
@@ -293,7 +293,7 @@ void MainWindow::getCurrentLStrPrefix(QStringList &slb, const QList<QString> &pq
             int iy = matchDate.captured(3).isEmpty() ? 0 : matchDate.captured(3).toInt();
             if (iy > 0) {
                 iy = currentDate.year() - iy;
-                st = prefix + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина") + ")";
+                st = prefix + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" anniversary") + ")";
             } else
                 st = prefix + fs.mid(matchDate.captured(0).length()).trimmed();
             slb.append(st);// + "\n";
@@ -307,9 +307,9 @@ QStringList MainWindow::getResultYesterdayLStr(QList<QString> pql, bool isEvent)
     QRegExp regexpDigit("[0-9][0-9]");
     int gdowom = getDayOfWeekOfMonth(-1);
     QDate currentDate = QDate::currentDate();
-    QString eventPrefix = isEvent ? tr("поздравили ") : "";
+    QString eventPrefix = isEvent ? tr("congratulated ") : "";
 
-    getCurrentLStrPrefix(slb, pql, currentDate.addDays(-1), tr("Вчера ") + eventPrefix);
+    getCurrentLStrPrefix(slb, pql, currentDate.addDays(-1), tr("Yesterday ") + eventPrefix);
     //обрабатываем дни недели: строки вида Вс1/11 - первое воскресенье ноября
     foreach(QString fs, pql)
     {
@@ -341,7 +341,7 @@ QStringList MainWindow::getResultYesterdayLStr(QList<QString> pql, bool isEvent)
         else if (sDayOfWeek == tr("Вс") && currentDate.dayOfWeek() == 1)
             append = true;
         if (append)
-            slb.append(tr("Вчера ") + eventPrefix + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
+            slb.append(tr("Yesterday ") + eventPrefix + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
     }
     //обрабатываем дни недели: строки вида Пн0, Вт0, Ср0, Чт0, Пт0, Сб0, Вс0
     foreach(QString fs, pql)
@@ -363,7 +363,7 @@ QStringList MainWindow::getResultYesterdayLStr(QList<QString> pql, bool isEvent)
         else if (sDayOfWeek == tr("Вс0") && currentDate.dayOfWeek() == 1)
             append = true;
         if (append)
-            slb.append(tr("Вчера ") + eventPrefix + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
+            slb.append(tr("Yesterday ") + eventPrefix + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
     }
     //if (!sb.isEmpty()) return sb.left(sb.length() -1);
     return slb;
@@ -375,9 +375,9 @@ QStringList MainWindow::getResultTodayLStr(QList<QString> pql, bool isEvent)
     QRegExp regexpDigit("[0-9][0-9]");
     int gdowom = getDayOfWeekOfMonth(0);
     QDate currentDate = QDate::currentDate();
-    QString eventPrefix = isEvent ? tr("поздравляем ") : "";
+    QString eventPrefix = isEvent ? tr("congratulate ") : "";
 
-    getCurrentLStrPrefix(slb, pql, currentDate, tr("Сегодня ") + eventPrefix);
+    getCurrentLStrPrefix(slb, pql, currentDate, tr("Today ") + eventPrefix);
     //обрабатываем дни недели: строки вида Вс1/11
     foreach(QString fs, pql)
     {
@@ -409,7 +409,7 @@ QStringList MainWindow::getResultTodayLStr(QList<QString> pql, bool isEvent)
         else if (sDayOfWeek == tr("Вс") && currentDate.dayOfWeek() == 7)
             append = true;
         if (append)
-            slb.append(tr("Сегодня ") + eventPrefix + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
+            slb.append(tr("Today ") + eventPrefix + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
     }
     //обрабатываем дни недели: строки вида Пн0, Вт0, Ср0, Чт0, Пт0, Сб0, Вс0
     foreach(QString fs, pql)
@@ -431,7 +431,7 @@ QStringList MainWindow::getResultTodayLStr(QList<QString> pql, bool isEvent)
         else if (sDayOfWeek == tr("Вс0") && currentDate.dayOfWeek() == 7)
             append = true;
         if (append)
-            slb.append(tr("Сегодня ") + eventPrefix + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
+            slb.append(tr("Today ") + eventPrefix + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
     }
 
     //if (sb != "") return sb.left(sb.length() -1);
@@ -444,9 +444,9 @@ QStringList MainWindow::getResultTomorrowLStr(QList<QString> pql, bool isEvent)
     QRegExp regexpDigit("[0-9][0-9]");
     int gdowom = getDayOfWeekOfMonth(1);
     QDate currentDate = QDate::currentDate();
-    QString eventPrefix = isEvent ? tr("поздравим ") : "";
+    QString eventPrefix = isEvent ? tr("congratulate ") : "";
 
-    getCurrentLStrPrefix(slb, pql, currentDate.addDays(1), tr("Завтра ") + eventPrefix);
+    getCurrentLStrPrefix(slb, pql, currentDate.addDays(1), tr("Tomorrow ") + eventPrefix);
 
     foreach(QString fs, pql)
     {
@@ -478,7 +478,7 @@ QStringList MainWindow::getResultTomorrowLStr(QList<QString> pql, bool isEvent)
         else if (sDayOfWeek == tr("Вс") && currentDate.dayOfWeek() == 6)
             append = true;
         if (append)
-            slb.append(tr("Завтра ") + eventPrefix + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
+            slb.append(tr("Tomorrow ") + eventPrefix + fs.replace(sDayOfWeekOfMonth, "").trimmed());// + "\n";
     }
     //обрабатываем дни недели: строки вида Пн0, Вт0, Ср0, Чт0, Пт0, Сб0, Вс0
     foreach(QString fs, pql)
@@ -500,7 +500,7 @@ QStringList MainWindow::getResultTomorrowLStr(QList<QString> pql, bool isEvent)
         else if (sDayOfWeek == tr("Вс0") && currentDate.dayOfWeek() == 6)
             append = true;
         if (append)
-            slb.append(tr("Завтра ") + eventPrefix + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
+            slb.append(tr("Tomorrow ") + eventPrefix + fs.replace(sDayOfWeek, "").trimmed());// + "\n";
     }
 
     //if (sb != "") return sb.left(sb.length() -1);
@@ -514,7 +514,7 @@ QString MainWindow::getDaysStr(int pdays)
     if (pdays >= 100)
         remains1 = pdays % 100;//остаток от деления на 100
 
-    if (remains1 >= 11 && remains1 <=14) return tr("дней");
+    if (remains1 >= 11 && remains1 <=14) return tr("days");//дней
 
     int remains2 = remains1;
 
@@ -523,9 +523,9 @@ QString MainWindow::getDaysStr(int pdays)
 
     switch (remains2)
     {
-        case 1: return tr("день");
-        case 2: case 3: case 4: return tr("дня");
-        default: return tr("дней");
+        case 1: return tr("day");//день
+        case 2: case 3: case 4: return tr("days");//дня
+        default: return tr("days");//дней
     }
 }
 //формируем строки "Через N дней"
@@ -559,22 +559,20 @@ QStringList MainWindow::getResultLStr(QList<QString> pql, int pdays, bool isEven
                 iy = currentDate.year() - iy;//dDate.year();
                 if (sLocale == "en_US")
                 {
-                    //slb.append(tr("Через ") + QString::number(pdays) + tr(" дней (") + slDayMonth[1] + "/" + slDayMonth[0] + ") " + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")\n";
-                    st = tr("Через ") + QString::number(pdays) + tr(" дней (") + matchDate.captured(2) + gDelimiter + matchDate.captured(1) + ") " + eventPrefix + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")";
+                    st = tr("The event in ") + QString::number(pdays) + tr(" days (") + matchDate.captured(2) + gDelimiter + matchDate.captured(1) + ") " + eventPrefix + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")";
                 }
                 else
-                    //slb.append(tr("Через ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + sDate.left(5).replace("/", ".") + ") " + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")\n";
-                    st = tr("Через ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + fs.left(5).replace("/", gDelimiter) + ") " + eventPrefix + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")";
+                    st = tr("The event in ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + fs.left(5).replace("/", gDelimiter) + ") " + eventPrefix + fs.mid(matchDate.captured(0).length()).trimmed() + " (" + QString::number(iy) + tr(" годовщина")+")";
                 slb.append(st);// + "\n";
             }
             else
             {
                 if (sLocale == "en_US")
                 {
-                    st = tr("Через ") + QString::number(pdays) + tr(" дней (") + matchDate.captured(2) + gDelimiter + matchDate.captured(1) + ") " + eventPrefix + fs.mid(matchDate.captured(0).length()).trimmed();
+                    st = tr("The event in ") + QString::number(pdays) + tr(" days (") + matchDate.captured(2) + gDelimiter + matchDate.captured(1) + ") " + eventPrefix + fs.mid(matchDate.captured(0).length()).trimmed();
                 }
                 else
-                    st = tr("Через ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + fs.left(5).replace("/", gDelimiter) + ") " + eventPrefix + fs.mid(matchDate.captured(0).length()).trimmed();
+                    st = tr("The event in ") + QString::number(pdays) + " " + getDaysStr(pdays) + " (" + fs.left(5).replace("/", gDelimiter) + ") " + eventPrefix + fs.mid(matchDate.captured(0).length()).trimmed();
                 slb.append(st);// + "\n";
             }
             //заполняем список ql3
@@ -943,9 +941,9 @@ void MainWindow::showContextMenuEvents(const QPoint& pos)
     QPoint globalPos = ui->plainTEditEvents->mapToGlobal(pos);
     QMenu myMenu;
 
-    QAction* copyAction = new QAction(tr("Копировать"), this);
-    QAction* selectAllAction = new QAction(tr("Выделить всё"), this);
-    QAction* editAction = new QAction(tr("Редактировать..."), this);
+    QAction* copyAction = new QAction(tr("Copy"), this);
+    QAction* selectAllAction = new QAction(tr("Select all"), this);
+    QAction* editAction = new QAction(tr("Edit..."), this);
 
     myMenu.addAction(copyAction);
     myMenu.addAction(selectAllAction);
@@ -963,9 +961,9 @@ void MainWindow::showContextMenuDates(const QPoint& pos)
     QPoint globalPos = ui->plainTEditDates->mapToGlobal(pos);
     QMenu myMenu;
 
-    QAction* copyAction = new QAction(tr("Копировать"), this);
-    QAction* selectAllAction = new QAction(tr("Выделить всё"), this);
-    QAction* editAction  = new QAction(tr("Редактировать..."), this);
+    QAction* copyAction = new QAction(tr("Copy"), this);
+    QAction* selectAllAction = new QAction(tr("Select all"), this);
+    QAction* editAction  = new QAction(tr("Edit..."), this);
 
     myMenu.addAction(copyAction);
     myMenu.addAction(selectAllAction);
@@ -983,9 +981,9 @@ void MainWindow::showContextMenuRuns(const QPoint& pos)
     QPoint globalPos = ui->plainTEditRuns->mapToGlobal(pos);
     QMenu myMenu;
 
-    QAction* copyAction = new QAction(tr("Копировать"), this);
-    //QAction* selectAllAction = new QAction(tr("Выделить всё"), this);
-    QAction* editAction  = new QAction(tr("Редактировать..."), this);
+    QAction* copyAction = new QAction(tr("Copy"), this);
+    //QAction* selectAllAction = new QAction(tr("Select all"), this);
+    QAction* editAction  = new QAction(tr("Edit..."), this);
 
     myMenu.addAction(copyAction);
     //myMenu.addAction(selectAllAction);

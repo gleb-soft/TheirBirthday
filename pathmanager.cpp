@@ -44,13 +44,13 @@ PathManager::PathManager()
     if (!d.exists(configPath))
        d.mkpath(configPath);
     if (!d.exists(configPath)) {
-        _errString = QObject::tr("Не могу создать каталог %1").arg(configPath);
+        _errString = QObject::tr("Can&apos;t create dir %1").arg(configPath);
         return;
     }
     if (!QFile::exists(_datesFilePath)) {
         QString datesTemplatePath = templPath + QDir::separator()+datesFileName;
         if (!QFile::copy(datesTemplatePath, _datesFilePath)) {
-            _errString = QObject::tr("Не могу скопировать файл %1").arg(datesTemplatePath);
+            _errString = QObject::tr("Can&apos;t copy file %1").arg(datesTemplatePath);
             return;
         }
     }
@@ -58,7 +58,7 @@ PathManager::PathManager()
     if (!QFile::exists(_eventsFilePath)) {
         QString eventsTemplatePath = templPath + QDir::separator()+eventsFileName;
         if (!QFile::copy(eventsTemplatePath, _eventsFilePath)) {
-            _errString = QObject::tr("Не могу скопировать файл %1").arg(eventsTemplatePath);
+            _errString = QObject::tr("Can&apos;t copy file %1").arg(eventsTemplatePath);
             return;
         }
     }

@@ -75,7 +75,7 @@ void EditWindow::on_buttonBox_clicked(QAbstractButton *button)
             fileStream.setEncoding(QStringConverter::Utf8);//.setCodec("CP1251");
             fileStream << ui->plainTextEdit->toPlainText();
             if (fileStream.status() != QTextStream::Ok)
-                qDebug() << tr("Ошибка записи файла");
+                qDebug() << tr("Error write file ") << gFileName;
             fl.close();
         }
     }
@@ -128,7 +128,7 @@ void EditWindow::keyPressEvent(QKeyEvent *ev)
             ui->plainTextEdit->moveCursor(QTextCursor::Start);
             curPos = ui->plainTextEdit->textCursor();
 
-            sWord = QInputDialog::getText(this, tr("Поиск"), tr("Найти:"), QLineEdit::Normal, "", &bOk);
+            sWord = QInputDialog::getText(this, tr("Search"), tr("Search:"), QLineEdit::Normal, "", &bOk);
             if(!bOk)
                 return;
 

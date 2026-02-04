@@ -167,17 +167,17 @@
     </message>
     <message>
         <location filename="mainwindow.cpp" line="49"/>
-        <source>Развернуть окно</source>
+        <source>Show window</source>
         <translation>Show window</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="50"/>
-        <source>Выход</source>
+        <source>Exit</source>
         <translation>Exit</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="81"/>
-        <source>Ошибка</source>
+        <source>Error</source>
         <translation>Error</translation>
     </message>
     <message>
@@ -202,8 +202,8 @@
         <location filename="mainwindow.cpp" line="321"/>
         <location filename="mainwindow.cpp" line="328"/>
         <location filename="mainwindow.cpp" line="335"/>
-        <source>Вчера </source>
-        <translation></translation>
+        <source>Yesterday </source>
+        <translation>Yesterday </translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="239"/>
@@ -313,7 +313,7 @@
         <location filename="mainwindow.cpp" line="474"/>
         <location filename="mainwindow.cpp" line="481"/>
         <location filename="mainwindow.cpp" line="488"/>
-        <source>Сегодня </source>
+        <source>Today </source>
         <translation>Today </translation>
     </message>
     <message>
@@ -321,7 +321,7 @@
         <location filename="mainwindow.cpp" line="519"/>
         <location filename="mainwindow.cpp" line="705"/>
         <location filename="mainwindow.cpp" line="709"/>
-        <source> годовщина</source>
+        <source> anniversary</source>
         <translation> anniversary</translation>
     </message>
     <message>
@@ -341,75 +341,71 @@
         <location filename="mainwindow.cpp" line="629"/>
         <location filename="mainwindow.cpp" line="636"/>
         <location filename="mainwindow.cpp" line="643"/>
-        <source>Завтра </source>
+        <source>Tomorrow </source>
         <translation>Tomorrow </translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="310"/>
-        <source>поздравили </source>
+        <source>congratulated </source>
         <translation>congratulated </translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="378"/>
-        <source>поздравляем </source>
+        <source>congratulate </source>
         <translation>congratulate </translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="447"/>
         <location filename="mainwindow.cpp" line="543"/>
-        <source>поздравим </source>
+        <source>congratulate </source>
         <translation>congratulate </translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="665"/>
-        <location filename="mainwindow.cpp" line="676"/>
-        <source>дней</source>
+        <location filename="mainwindow.cpp" line="517"/>
+        <location filename="mainwindow.cpp" line="527"/>
+        <source>days</source>
         <translation>days</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="674"/>
-        <source>день</source>
+        <location filename="mainwindow.cpp" line="526"/>
+        <source>day</source>
         <translation>day</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="675"/>
-        <source>дня</source>
+        <location filename="mainwindow.cpp" line="528"/>
+        <source>days</source>
         <translation>days</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="705"/>
-        <location filename="mainwindow.cpp" line="709"/>
-        <location filename="mainwindow.cpp" line="716"/>
-        <location filename="mainwindow.cpp" line="719"/>
-        <source>Через </source>
+        <location filename="mainwindow.cpp" line="562"/>
+        <location filename="mainwindow.cpp" line="565"/>
+        <location filename="mainwindow.cpp" line="572"/>
+        <location filename="mainwindow.cpp" line="575"/>
+        <source>The event in </source>
         <translation>The event in </translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="705"/>
-        <location filename="mainwindow.cpp" line="716"/>
-        <source> дней (</source>
+        <location filename="mainwindow.cpp" line="563"/>
+        <location filename="mainwindow.cpp" line="574"/>
+        <source> days (</source>
         <translation> days (</translation>
-    </message>
-    <message>
-        <source>Сегод</source>
-        <translation type="vanished">Today</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="981"/>
         <location filename="mainwindow.cpp" line="1001"/>
-        <source>Копировать</source>
+        <source>Copy</source>
         <translation>Copy</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="982"/>
         <location filename="mainwindow.cpp" line="1002"/>
-        <source>Выделить всё</source>
+        <source>Select all</source>
         <translation>Select all</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="983"/>
         <location filename="mainwindow.cpp" line="1003"/>
-        <source>Редактировать...</source>
+        <source>Edit...</source>
         <translation>Edit...</translation>
     </message>
 </context>
@@ -418,13 +414,13 @@
     <message>
         <location filename="pathmanager.cpp" line="46"/>
         <source>Не могу создать каталог %1</source>
-        <translation>can&apos;t create dir %1</translation>
+        <translation>Can&apos;t create dir %1</translation>
     </message>
     <message>
         <location filename="pathmanager.cpp" line="52"/>
         <location filename="pathmanager.cpp" line="60"/>
-        <source>Не могу скопировать файл %1</source>
-        <translation>can&apos;t copy file %1</translation>
+        <source>Can&apos;t copy file %1</source>
+        <translation>Can&apos;t copy file %1</translation>
     </message>
 </context>
 <context>
